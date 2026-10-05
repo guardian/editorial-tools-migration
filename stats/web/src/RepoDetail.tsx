@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Typography } from '@guardian/stand/Typography';
 import { AlertBanner } from '@guardian/stand/AlertBanner';
 import { PlatformBadge } from './components/PlatformBadge.tsx';
@@ -12,6 +12,15 @@ import {
 type RepoDetailProps = {
   name: string;
   repo: AppStats | undefined;
+};
+
+// GitHub repositories backing each app, for commit and PR links.
+const REPO_URLS: Record<string, string> = {
+  Workflow: 'https://github.com/guardian/workflow-frontend',
+  Grid: 'https://github.com/guardian/grid',
+  Restorer: 'https://github.com/guardian/flexible-restorer',
+  Fronts: 'https://github.com/guardian/facia-tool',
+  'Story Packages': 'https://github.com/guardian/story-packages',
 };
 
 function formatCommitDate(ms: number): string {
@@ -45,6 +54,7 @@ export default function RepoDetail({ name, repo }: RepoDetailProps) {
   const potential = repo?.potentialScenarios ?? 0;
   const featuresLeftToWrite = Math.max(0, potential - cucumber);
   const featuresLeftToImplement = Math.max(0, potential - implemented);
+  const repoUrl = REPO_URLS[name];
 
   // Place commits in proportion to their date, but never closer than MIN_GAP so
   // neighbouring dots can't overlap.
@@ -64,6 +74,49 @@ export default function RepoDetail({ name, repo }: RepoDetailProps) {
     return result;
   }, [series]);
   const trackWidth = Math.max(480, positions[positions.length - 1] ?? 0);
+
+  const timelineRef = useRef<HTMLDivElement>(null);
+  const scrollDirRef = useRef(0);
+  const rafRef = useRef<number | null>(null);
+
+  // Start fully scrolled to the right so the latest commit is in view.
+  useEffect(() => {
+    const el = timelineRef.current;
+    if (el) el.scrollLeft = el.scrollWidth;
+  }, [trackWidth]);
+
+  useEffect(() => () => {
+    if (rafRef.current != null) cancelAnimationFrame(rafRef.current);
+  }, []);
+
+  const EDGE_ZONE = 64;
+  const SCROLL_SPEED = 14;
+
+  const stepScroll = () => {
+    const el = timelineRef.current;
+    if (el && scrollDirRef.current !== 0) {
+      el.scrollLeft += scrollDirRef.current * SCROLL_SPEED;
+      rafRef.current = requestAnimationFrame(stepScroll);
+    } else {
+      rafRef.current = null;
+    }
+  };
+
+  const handleTimelineMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    const el = timelineRef.current;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const dir = x < EDGE_ZONE ? -1 : x > rect.width - EDGE_ZONE ? 1 : 0;
+    scrollDirRef.current = dir;
+    if (dir !== 0 && rafRef.current == null) {
+      rafRef.current = requestAnimationFrame(stepScroll);
+    }
+  };
+
+  const handleTimelineMouseLeave = () => {
+    scrollDirRef.current = 0;
+  };
 
   return (
     <main className="container">
@@ -94,7 +147,12 @@ export default function RepoDetail({ name, repo }: RepoDetailProps) {
               <Typography element="p" variant="bodyMd" className="subtitle">
                 Select a commit to view its category breakdown below.
               </Typography>
-              <div className="commit-timeline">
+              <div
+                className="commit-timeline"
+                ref={timelineRef}
+                onMouseMove={handleTimelineMouseMove}
+                onMouseLeave={handleTimelineMouseLeave}
+              >
                 <div className="commit-track" style={{ width: `${trackWidth}px` }}>
                   {series.map((point, i) => {
                     const left = positions[i] ?? 0;
@@ -124,7 +182,35 @@ export default function RepoDetail({ name, repo }: RepoDetailProps) {
             {selected && (
               <Typography element="p" variant="bodyMd" className="subtitle">
                 {formatCommitDate(selected.t)}
-                {selected.commit && ` · ${selected.commit.slice(0, 7)}`} ·{' '}
+                {selected.commit && (
+                  <>
+                    {' · '}
+                    {repoUrl ? (
+                      <a
+                        href={`${repoUrl}/commit/${selected.commit}`}
+                        target="_blank"
+                        rel="noreferrer"
+                      >
+                        {selected.commit.slice(0, 7)}
+                      </a>
+                    ) : (
+                      selected.commit.slice(0, 7)
+                    )}
+                  </>
+                )}
+                {selected.pr && repoUrl && (
+                  <>
+                    {' · '}
+                    <a
+                      href={`${repoUrl}/pull/${selected.pr}`}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      PR #{selected.pr}
+                    </a>
+                  </>
+                )}
+                {' · '}
                 {selected.percentComplete.toFixed(1)}% complete
               </Typography>
             )}

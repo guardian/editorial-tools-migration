@@ -18,6 +18,7 @@ type CsvRow = Record<string, string | undefined>;
 type SamplePoint = {
   t: number;
   commit: string;
+  pr: string;
   toMigrate: number;
   percentComplete: number;
   cucumber: number;
@@ -151,6 +152,7 @@ export default function App() {
     type Sample = {
       t: number | null;
       commit: string;
+      pr: string;
       baseline: number;
       toMigrate: number;
       migrated: number;
@@ -175,6 +177,7 @@ export default function App() {
         s = {
           t: row.timestamp ? Date.parse(row.timestamp) : null,
           commit: row.commit || '',
+          pr: row.pr || '',
           baseline: Number(row.baseline) || 0,
           toMigrate: 0,
           migrated: 0,
@@ -207,6 +210,7 @@ export default function App() {
         .map((s) => ({
           t: s.t,
           commit: s.commit,
+          pr: s.pr,
           toMigrate: s.toMigrate,
           percentComplete: clampPercent(((s.baseline - s.toMigrate) / s.baseline) * 100),
           cucumber: s.cucumber,

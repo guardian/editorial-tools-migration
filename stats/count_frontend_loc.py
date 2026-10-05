@@ -679,11 +679,13 @@ def print_report(all_stats: list[RepoStats]) -> None:
 
 CSV_FIELDS = [
     "app", "platform", "category", "status", "lines",
-    "commit", "timestamp", "baseline", "percent_complete",
+    "commit", "pr", "timestamp", "baseline", "percent_complete",
 ]
 
 
-def stats_to_rows(stats: RepoStats, commit: str, timestamp: str) -> list[dict]:
+def stats_to_rows(
+    stats: RepoStats, commit: str, timestamp: str, pr: int | None = None
+) -> list[dict]:
     """Turn a RepoStats into tidy (long) CSV rows, one per category.
 
     Each row carries the app's Angular/Knockout baseline and the resulting
@@ -704,6 +706,7 @@ def stats_to_rows(stats: RepoStats, commit: str, timestamp: str) -> list[dict]:
                 "status": status,
                 "lines": lines,
                 "commit": commit,
+                "pr": pr if pr else "",
                 "timestamp": timestamp,
                 "baseline": baseline if baseline else "",
                 "percent_complete": f"{pct:.1f}" if pct is not None else "",
@@ -718,6 +721,7 @@ def stats_to_rows(stats: RepoStats, commit: str, timestamp: str) -> list[dict]:
             "status": "implemented",
             "lines": stats.implemented_scenarios,
             "commit": commit,
+            "pr": pr if pr else "",
             "timestamp": timestamp,
             "baseline": baseline if baseline else "",
             "percent_complete": f"{pct:.1f}" if pct is not None else "",
@@ -839,7 +843,7 @@ def run_history(args: argparse.Namespace) -> int:
                     print(f"  ERROR at {sha[:10]}: {exc}", file=sys.stderr)
                     continue
                 stats = analyse_repo(repo, repo_root)
-                new_rows.extend(stats_to_rows(stats, sha, timestamp))
+                new_rows.extend(stats_to_rows(stats, sha, timestamp, pr))
                 recorded += 1
                 label = f"PR #{pr}" if pr else "baseline"
                 print(
