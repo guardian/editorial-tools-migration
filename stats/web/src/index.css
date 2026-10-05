@@ -164,6 +164,17 @@ a:hover {
   flex-wrap: nowrap;
 }
 
+.range-custom .react-aria-DatePicker {
+  width: 13rem;
+  max-width: 13rem;
+  flex: 0 0 13rem;
+}
+
+.range-custom .react-aria-DateInput {
+  flex-wrap: nowrap;
+  white-space: nowrap;
+}
+
 .projection-summary {
   margin-bottom: 1rem;
 }
