@@ -7,6 +7,7 @@ import { StatCard } from './components/StatCard.tsx';
 import { ProgressBar } from './components/ProgressBar.tsx';
 import { CoverageBar } from './components/CoverageBar.tsx';
 import { PlatformBadge } from './components/PlatformBadge.tsx';
+import { AppTopBar } from './components/AppTopBar.tsx';
 
 const MIGRATED_CATEGORY = 'Migrated (TS/TSX)';
 const TO_MIGRATE_CATEGORIES = ['JavaScript', 'HTML templates', 'CSS'];
@@ -262,47 +263,46 @@ export default function App() {
 
   if (error) {
     return (
-      <main className="container">
-        <Typography element="h1" variant="headingLg">
-          Ed Tools Modernisation Stats
-        </Typography>
-        <AlertBanner level="error">
-          <Typography element="p" variant="bodyMd">
-            {error}
-          </Typography>
-          <Typography element="p" variant="bodyMd">
-            Generate the data first from the project root: <code>python3 count_frontend_loc.py</code>
-          </Typography>
-        </AlertBanner>
-      </main>
+      <>
+        <AppTopBar />
+        <main className="container">
+          <AlertBanner level="error">
+            <Typography element="p" variant="bodyMd">
+              {error}
+            </Typography>
+            <Typography element="p" variant="bodyMd">
+              Generate the data first from the project root: <code>python3 count_frontend_loc.py</code>
+            </Typography>
+          </AlertBanner>
+        </main>
+      </>
     );
   }
 
   if (!model) {
     return (
-      <main className="container">
-        <Typography element="h1" variant="headingLg">
-          Ed Tools Modernisation Stats
-        </Typography>
-        <Typography element="p" variant="bodyMd">
-          Loading…
-        </Typography>
-      </main>
+      <>
+        <AppTopBar />
+        <main className="container">
+          <Typography element="p" variant="bodyMd">
+            Loading…
+          </Typography>
+        </main>
+      </>
     );
   }
 
   const { appList, totals, categoryTotals, totalSeries } = model;
 
   return (
-    <main className="container">
-      <header>
-        <Typography element="h1" variant="headingLg">
-          Ed Tools Modernisation Stats
-        </Typography>
-        <Typography element="p" variant="bodyMd" className="subtitle">
-          Frontend lines of code to migrate from Angular / Knockout to React.
-        </Typography>
-      </header>
+    <>
+      <AppTopBar />
+      <main className="container">
+        <header>
+          <Typography element="p" variant="bodyMd" className="subtitle">
+            Frontend lines of code to migrate from Angular / Knockout to React.
+          </Typography>
+        </header>
 
       <section className="cards">
         <StatCard label="Lines to migrate" value={formatNumber(totals.toMigrate)} accent="warn" />
@@ -450,7 +450,8 @@ export default function App() {
       <ProgressChart appList={appList} totalSeries={totalSeries} />
 
       <BurndownChart totalToMigrate={totals.toMigrate} />
-    </main>
+      </main>
+    </>
   );
 }
 
