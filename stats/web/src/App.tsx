@@ -19,6 +19,8 @@ type SamplePoint = {
   t: number;
   toMigrate: number;
   percentComplete: number;
+  cucumber: number;
+  implemented: number;
 };
 
 type AppStats = {
@@ -202,6 +204,8 @@ export default function App() {
           t: s.t,
           toMigrate: s.toMigrate,
           percentComplete: clampPercent(((s.baseline - s.toMigrate) / s.baseline) * 100),
+          cucumber: s.cucumber,
+          implemented: s.implemented,
         }));
       const total = toMigrate + migrated;
       const percentComplete = baseline

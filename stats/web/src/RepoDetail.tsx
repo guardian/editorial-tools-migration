@@ -1,6 +1,7 @@
 import { Typography } from '@guardian/stand/Typography';
 import { AlertBanner } from '@guardian/stand/AlertBanner';
 import { PlatformBadge } from './components/PlatformBadge.tsx';
+import RepoProgressChart from './RepoProgressChart.tsx';
 import type { AppStats } from './App.tsx';
 
 type RepoDetailProps = {
@@ -27,11 +28,7 @@ export default function RepoDetail({ name, repo }: RepoDetailProps) {
       </header>
 
       {repo ? (
-        <section>
-          <Typography element="p" variant="bodyMd">
-            Detailed view for this repository is coming soon.
-          </Typography>
-        </section>
+        <RepoProgressChart repo={repo} />
       ) : (
         <AlertBanner level="warning">
           <Typography element="p" variant="bodyMd">
