@@ -54,7 +54,7 @@ export default function RepoDetail({ name, repo }: RepoDetailProps) {
   const potential = repo?.potentialScenarios ?? 0;
   const featuresLeftToWrite = Math.max(0, potential - cucumber);
   const featuresLeftToImplement = Math.max(0, potential - implemented);
-  const totalLinesLeft = TO_MIGRATE_CATEGORIES.reduce((s, c) => s + (categories[c] || 0), 0);
+  const firstCategories = series[0]?.categories ?? {};
   const repoUrl = REPO_URLS[name];
 
   // Place commits in proportion to their date, but never closer than MIN_GAP so
@@ -223,7 +223,8 @@ export default function RepoDetail({ name, repo }: RepoDetailProps) {
                 <tr>
                   <th>Category</th>
                   <th className="num">To migrate</th>
-                  <th className="num">% of total</th>
+                  <th className="num">Completed</th>
+                  <th className="num">% left to migrate</th>
                 </tr>
               </thead>
               <tbody>
@@ -231,16 +232,20 @@ export default function RepoDetail({ name, repo }: RepoDetailProps) {
                   <tr key={c}>
                     <td>{c}</td>
                     <td className="num">{formatNumber(categories[c] || 0)}</td>
+                    <td className="num migrated-cell">
+                      {formatNumber(Math.max(0, (firstCategories[c] || 0) - (categories[c] || 0)))}
+                    </td>
                     <td className="num">
-                      {totalLinesLeft > 0
-                        ? `${(((categories[c] || 0) / totalLinesLeft) * 100).toFixed(1)}%`
+                      {(firstCategories[c] || 0) > 0
+                        ? `${Math.min(100, ((categories[c] || 0) / (firstCategories[c] || 0)) * 100).toFixed(1)}%`
                         : '—'}
                     </td>
                   </tr>
                 ))}
                 <tr>
-                  <td>Features left to write</td>
+                  <td>Features defined</td>
                   <td className="num">{formatNumber(featuresLeftToWrite)}</td>
+                  <td className="num migrated-cell">{formatNumber(cucumber)}</td>
                   <td className="num">
                     {potential > 0
                       ? `${((featuresLeftToWrite / potential) * 100).toFixed(1)}%`
@@ -248,8 +253,9 @@ export default function RepoDetail({ name, repo }: RepoDetailProps) {
                   </td>
                 </tr>
                 <tr>
-                  <td>Features left to implement</td>
+                  <td>Features implemented</td>
                   <td className="num">{formatNumber(featuresLeftToImplement)}</td>
+                  <td className="num migrated-cell">{formatNumber(implemented)}</td>
                   <td className="num">
                     {potential > 0
                       ? `${((featuresLeftToImplement / potential) * 100).toFixed(1)}%`
