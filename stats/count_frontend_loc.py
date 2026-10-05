@@ -79,6 +79,9 @@ MIGRATED_CATEGORY = "Migrated (TS/TSX)"
 # Cucumber/Gherkin feature files are tracked as a separate "added" metric,
 # independent of the migration (neither to-migrate nor React migrated).
 CUCUMBER_CATEGORY = "Cucumber features"
+# Scenarios whose every step has a matching step definition (an "implemented"
+# test), reported alongside the written scenario count.
+IMPLEMENTED_CATEGORY = "Cucumber implemented"
 
 CATEGORIES: dict[str, set[str]] = {
     "JavaScript": {".js", ".jsx", ".mjs", ".cjs"},
@@ -376,6 +379,7 @@ class RepoStats:
     total_lines: int = 0
     total_files: int = 0
     by_category: dict[str, int] = field(default_factory=dict)
+    implemented_scenarios: int = 0
 
     @property
     def to_migrate(self) -> int:
@@ -410,6 +414,124 @@ def count_scenarios(text: str) -> int:
     return len(SCENARIO_RE.findall(text))
 
 
+# --- Cucumber step-definition coverage ---------------------------------------
+
+# Step definitions: Given/When/Then/defineStep/Step("expr" | 'expr' | `expr` | /re/).
+STEP_DEF_RE = re.compile(
+    r"""\b(?:Given|When|Then|defineStep|Step)\s*\(\s*"""
+    r"""(?:"((?:[^"\\]|\\.)*)"|'((?:[^'\\]|\\.)*)'|`((?:[^`\\]|\\.)*)`"""
+    r"""|/((?:[^/\\\n]|\\.)*)/[a-z]*)"""
+)
+_PARAM_RE = re.compile(r"\{[^}]*\}")
+_STEP_LINE_RE = re.compile(r"^\s*(?:Given|When|Then|And|But|\*)\s+(.*\S)\s*$")
+_SCENARIO_LINE_RE = re.compile(r"^(?:Scenario Outline|Scenario Template|Scenario)\s*:")
+# Tags marking scenarios that are written but not actually implemented yet.
+NOT_IMPLEMENTED_TAGS = {"@pending", "@todo", "@wip", "@skip", "@manual", "@ignore"}
+
+
+def _cucumber_expr_to_regex(expr: str) -> "re.Pattern[str]":
+    """Convert a Cucumber expression to a regex; parameters match leniently."""
+    parts: list[str] = []
+    last = 0
+    for m in _PARAM_RE.finditer(expr):
+        parts.append(re.escape(expr[last:m.start()]))
+        parts.append("(.+?)")
+        last = m.end()
+    parts.append(re.escape(expr[last:]))
+    # Cucumber optional text "(s)" -> "(?:s)?" (parens are escaped by re.escape).
+    pattern = re.sub(r"\\\((.*?)\\\)", r"(?:\1)?", "".join(parts))
+    return re.compile("^" + pattern + "$")
+
+
+def collect_step_patterns(repo_root: Path) -> list["re.Pattern[str]"]:
+    """Compile matchers for every step definition in *.steps.ts under repo_root."""
+    patterns: list[re.Pattern[str]] = []
+    for path in repo_root.rglob("*.steps.ts"):
+        if not path.is_file() or is_excluded(path, repo_root):
+            continue
+        text = read_text(path)
+        if text is None:
+            continue
+        for m in STEP_DEF_RE.finditer(text):
+            expr = m.group(1) or m.group(2) or m.group(3)
+            regex = m.group(4)
+            try:
+                patterns.append(
+                    re.compile(regex) if regex is not None
+                    else _cucumber_expr_to_regex(expr)
+                )
+            except re.error:
+                continue
+    return patterns
+
+
+def parse_feature_scenarios(text: str) -> list[tuple[list[str], set[str]]]:
+    """Parse a feature into (steps, tags) per scenario; steps include Background."""
+    scenarios: list[tuple[list[str], set[str]]] = []
+    background: list[str] = []
+    current: list[str] | None = None
+    in_background = False
+    tags: set[str] = set()
+    feature_tags: set[str] = set()
+    for raw in text.splitlines():
+        line = raw.strip()
+        if not line or line.startswith("#"):
+            continue
+        if line.startswith("@"):
+            tags |= {t.lower() for t in line.split()}
+            continue
+        if line.startswith("Feature:"):
+            feature_tags = tags
+            tags = set()
+            continue
+        if line.startswith("Background:"):
+            in_background = True
+            current = None
+            tags = set()
+            continue
+        if _SCENARIO_LINE_RE.match(line):
+            in_background = False
+            current = []
+            scenarios.append((current, tags | feature_tags))
+            tags = set()
+            continue
+        if line.startswith(("Examples:", "Rule:")):
+            in_background = False
+            current = None
+            tags = set()
+            continue
+        if line.startswith("|") or line.startswith('"""'):
+            continue
+        sm = _STEP_LINE_RE.match(line)
+        if sm:
+            step = sm.group(1).strip()
+            if in_background:
+                background.append(step)
+            elif current is not None:
+                current.append(step)
+    return [(background + steps, t) for steps, t in scenarios]
+
+
+def count_implemented_scenarios(repo_root: Path) -> int:
+    """Scenarios whose every step matches a step definition and aren't pending."""
+    patterns = collect_step_patterns(repo_root)
+    if not patterns:
+        return 0
+    implemented = 0
+    for path in repo_root.rglob("*.feature"):
+        if not path.is_file() or is_excluded(path, repo_root):
+            continue
+        text = read_text(path)
+        if text is None:
+            continue
+        for steps, tags in parse_feature_scenarios(text):
+            if not steps or tags & NOT_IMPLEMENTED_TAGS:
+                continue
+            if all(any(p.search(s) for p in patterns) for s in steps):
+                implemented += 1
+    return implemented
+
+
 def analyse_repo(repo: Repo, repo_root: Path) -> RepoStats:
     stats = RepoStats(repo=repo)
     candidates = relevant_frameworks(repo.platform)
@@ -438,6 +560,7 @@ def analyse_repo(repo: Repo, repo_root: Path) -> RepoStats:
         stats.by_category[category] = stats.by_category.get(category, 0) + count
         stats.total_lines += count
         stats.total_files += 1
+    stats.implemented_scenarios = count_implemented_scenarios(repo_root)
     return stats
 
 
@@ -471,7 +594,7 @@ def print_report(all_stats: list[RepoStats]) -> None:
     summary_header = (
         f"{'App':<16} {'Platform':<10} {'Files':>8} "
         f"{'Baseline':>12} {'To migrate':>12} {'Migrated':>12} "
-        f"{'Scenarios':>10} {'Complete':>9}"
+        f"{'Scenarios':>10} {'Impl':>7} {'Complete':>9}"
     )
     print(summary_header)
     print("-" * len(summary_header))
@@ -481,26 +604,29 @@ def print_report(all_stats: list[RepoStats]) -> None:
     grand_to_migrate = 0
     grand_migrated = 0
     grand_cucumber = 0
+    grand_impl = 0
     for stats in all_stats:
         baseline = stats.repo.baseline_loc or 0
         pct = percent_complete(stats.repo.baseline_loc, stats.to_migrate)
         print(
             f"{stats.repo.app:<16} {stats.repo.platform:<10} "
             f"{stats.total_files:>8,} {baseline:>12,} {stats.to_migrate:>12,} "
-            f"{stats.migrated:>12,} {stats.cucumber:>10,} {_fmt_pct(pct):>9}"
+            f"{stats.migrated:>12,} {stats.cucumber:>10,} "
+            f"{stats.implemented_scenarios:>7,} {_fmt_pct(pct):>9}"
         )
         grand_files += stats.total_files
         grand_baseline += baseline
         grand_to_migrate += stats.to_migrate
         grand_migrated += stats.migrated
         grand_cucumber += stats.cucumber
+        grand_impl += stats.implemented_scenarios
 
     print("-" * len(summary_header))
     grand_pct = percent_complete(grand_baseline, grand_to_migrate)
     print(
         f"{'TOTAL':<16} {'':<10} {grand_files:>8,} "
         f"{grand_baseline:>12,} {grand_to_migrate:>12,} {grand_migrated:>12,} "
-        f"{grand_cucumber:>10,} {_fmt_pct(grand_pct):>9}"
+        f"{grand_cucumber:>10,} {grand_impl:>7,} {_fmt_pct(grand_pct):>9}"
     )
 
     # --- Detailed per-application category breakdown ------------------------
@@ -583,6 +709,20 @@ def stats_to_rows(stats: RepoStats, commit: str, timestamp: str) -> list[dict]:
                 "percent_complete": f"{pct:.1f}" if pct is not None else "",
             }
         )
+    # Implemented-scenario coverage is a derived per-app metric, not a file type.
+    rows.append(
+        {
+            "app": stats.repo.app,
+            "platform": stats.repo.platform,
+            "category": IMPLEMENTED_CATEGORY,
+            "status": "implemented",
+            "lines": stats.implemented_scenarios,
+            "commit": commit,
+            "timestamp": timestamp,
+            "baseline": baseline if baseline else "",
+            "percent_complete": f"{pct:.1f}" if pct is not None else "",
+        }
+    )
     return rows
 
 
