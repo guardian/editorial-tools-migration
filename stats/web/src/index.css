@@ -1,10 +1,10 @@
 :root {
-  --bg: #0f172a;
-  --panel: #1e293b;
-  --panel-2: #273449;
-  --text: #e2e8f0;
-  --muted: #94a3b8;
-  --border: #334155;
+  --bg: #ffffff;
+  --panel: #f8fafc;
+  --panel-2: #f1f5f9;
+  --text: #0f172a;
+  --muted: #64748b;
+  --border: #e2e8f0;
   --good: #22c55e;
   --warn: #f59e0b;
   --accent: #38bdf8;
@@ -35,7 +35,6 @@ header h1 {
 
 .subtitle {
   margin: 0 0 2rem;
-  color: var(--muted);
 }
 
 h2 {

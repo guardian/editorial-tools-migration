@@ -3,9 +3,6 @@ import Highcharts from 'highcharts';
 import HighchartsReact from 'highcharts-react-official';
 import { Typography } from '@guardian/stand/Typography';
 
-// Typography defaults to black text; on the dark dashboard we inherit the body colour.
-const inheritColor = { color: 'inherit' } as const;
-
 function formatDate(ms: number): string {
   return new Date(ms).toLocaleDateString('en-GB', {
     day: 'numeric',
@@ -166,7 +163,7 @@ export default function BurndownChart({ totalToMigrate }: BurndownChartProps) {
 
   return (
     <section>
-      <Typography element="h2" variant="headingMd" theme={inheritColor}>
+      <Typography element="h2" variant="headingMd">
         Migration burndown projection
       </Typography>
 
@@ -196,7 +193,7 @@ export default function BurndownChart({ totalToMigrate }: BurndownChartProps) {
             At 0 lines/day the migration never completes — increase the velocity.
           </Typography>
         ) : (
-          <Typography element="p" variant="bodyMd" theme={inheritColor}>
+          <Typography element="p" variant="bodyMd">
             At <strong>{velocity.toLocaleString('en-GB')}</strong> lines/day over a 5-day
             working week, the <strong>{totalToMigrate.toLocaleString('en-GB')}</strong> remaining
             lines take <strong>{workDays.toLocaleString('en-GB')}</strong> working days (

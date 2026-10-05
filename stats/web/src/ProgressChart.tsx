@@ -20,10 +20,6 @@ const RANGE_PRESETS: Array<{ key: PresetKey; label: string; months: number | nul
 
 const DEFAULT_PRESET: PresetKey = '1m';
 
-// Typography defaults to black text; on the dark dashboard we inherit the body colour.
-const mutedColor = { color: 'var(--muted)' } as const;
-const inheritColor = { color: 'inherit' } as const;
-
 function subMonths(ms: number, months: number): number {
     const d = new Date(ms);
     d.setMonth(d.getMonth() - months);
@@ -89,7 +85,7 @@ export default function ProgressChart({ appList, totalSeries }: ProgressChartPro
                 type: 'line' as const,
                 name: 'Overall',
                 data: totalSeries.map(([t, p]) => [t, Number(p.toFixed(2))]),
-                color: '#e2e8f0',
+                color: '#0f172a',
                 lineWidth: 3,
                 zIndex: 5,
             },
@@ -105,8 +101,8 @@ export default function ProgressChart({ appList, totalSeries }: ProgressChartPro
             title: { text: '' },
             credits: { enabled: false },
             legend: {
-                itemStyle: { color: '#cbd5e1' },
-                itemHoverStyle: { color: '#fff' },
+                itemStyle: { color: '#334155' },
+                itemHoverStyle: { color: '#0f172a' },
             },
             xAxis: {
                 type: 'datetime',
@@ -146,10 +142,10 @@ export default function ProgressChart({ appList, totalSeries }: ProgressChartPro
 
     return (
         <section>
-            <Typography element="h2" variant="headingMd" theme={inheritColor}>
+            <Typography element="h2" variant="headingMd">
                 Migration progress over time
             </Typography>
-            <Typography element="p" variant="bodyMd" theme={mutedColor} className="subtitle">
+            <Typography element="p" variant="bodyMd" className="subtitle">
                 Percent of each app’s baseline Angular / Knockout code removed, measured at
                 every pull request from the baseline commit to now.
             </Typography>
