@@ -53,9 +53,9 @@ class Repo:
 
 
 REPOS: list[Repo] = [
-    Repo("Workflow", "Angular", "https://github.com/guardian/workflow-frontend", baseline="5c1f3b0f09bd7f4813c82eabe988d931f7978aeb", baseline_loc=12362),
-    Repo("Grid", "Angular", "https://github.com/guardian/grid", baseline="c455c353f08adbffafaa3427d0675615d7efacc7", baseline_loc=25593),
-    Repo("Restorer", "Angular", "https://github.com/guardian/flexible-restorer", baseline="fa466dee9e8b59496ed0f4ce578d4d5becd69ba0", baseline_loc=3834),
+    Repo("Workflow", "Angular", "https://github.com/guardian/workflow-frontend", baseline="5c1f3b0f09bd7f4813c82eabe988d931f7978aeb", baseline_loc=12290),
+    Repo("Grid", "Angular", "https://github.com/guardian/grid", baseline="c455c353f08adbffafaa3427d0675615d7efacc7", baseline_loc=25550),
+    Repo("Restorer", "Angular", "https://github.com/guardian/flexible-restorer", baseline="fa466dee9e8b59496ed0f4ce578d4d5becd69ba0", baseline_loc=3441),
     Repo("Fronts", "Knockout", "https://github.com/guardian/facia-tool", baseline="0b16232d7b317b83c7a3bfd5f4d4a1af58a35920", baseline_loc=12891),
     Repo("Story Packages", "Knockout", "https://github.com/guardian/story-packages", baseline="ac79901243069b52ce625d0231fe979b7dffdba4", baseline_loc=7841),
 ]
