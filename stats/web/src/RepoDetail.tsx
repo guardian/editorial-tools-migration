@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Typography } from '@guardian/stand/Typography';
 import { AlertBanner } from '@guardian/stand/AlertBanner';
 import { PlatformBadge } from './components/PlatformBadge.tsx';
+import { ProgressBar } from './components/ProgressBar.tsx';
 import RepoProgressChart from './RepoProgressChart.tsx';
 import {
   TO_MIGRATE_CATEGORIES,
@@ -119,6 +120,19 @@ export default function RepoDetail({ name, repo }: RepoDetailProps) {
     scrollDirRef.current = 0;
   };
 
+  const handleTimelineKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+    e.preventDefault();
+    const next = Math.max(
+      0,
+      Math.min(series.length - 1, selectedIndex + (e.key === 'ArrowLeft' ? -1 : 1))
+    );
+    setSelectedIndex(next);
+    const node = timelineRef.current?.querySelectorAll<HTMLButtonElement>('.commit-node')[next];
+    node?.focus();
+    node?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+  };
+
   return (
     <main className="container">
       <p className="back-link">
@@ -153,6 +167,7 @@ export default function RepoDetail({ name, repo }: RepoDetailProps) {
                 ref={timelineRef}
                 onMouseMove={handleTimelineMouseMove}
                 onMouseLeave={handleTimelineMouseLeave}
+                onKeyDown={handleTimelineKeyDown}
               >
                 <div className="commit-track" style={{ width: `${trackWidth}px` }}>
                   {series.map((point, i) => {
@@ -164,6 +179,8 @@ export default function RepoDetail({ name, repo }: RepoDetailProps) {
                         className={`commit-node${i === selectedIndex ? ' is-selected' : ''}`}
                         style={{ left: `${left}px` }}
                         onClick={() => setSelectedIndex(i)}
+                        onMouseEnter={() => setSelectedIndex(i)}
+                        onFocus={() => setSelectedIndex(i)}
                         title={point.commit || undefined}
                       >
                         <span className="commit-dot" />
@@ -224,7 +241,7 @@ export default function RepoDetail({ name, repo }: RepoDetailProps) {
                   <th>Category</th>
                   <th className="num">To migrate</th>
                   <th className="num">Completed</th>
-                  <th className="num">% left to migrate</th>
+                  <th>% migrated</th>
                 </tr>
               </thead>
               <tbody>
@@ -235,10 +252,22 @@ export default function RepoDetail({ name, repo }: RepoDetailProps) {
                     <td className="num migrated-cell">
                       {formatNumber(Math.max(0, (firstCategories[c] || 0) - (categories[c] || 0)))}
                     </td>
-                    <td className="num">
-                      {(firstCategories[c] || 0) > 0
-                        ? `${Math.min(100, ((categories[c] || 0) / (firstCategories[c] || 0)) * 100).toFixed(1)}%`
-                        : '—'}
+                    <td>
+                      <ProgressBar
+                        percent={
+                          (firstCategories[c] || 0) > 0
+                            ? Math.min(
+                                100,
+                                Math.max(
+                                  0,
+                                  (((firstCategories[c] || 0) - (categories[c] || 0)) /
+                                    (firstCategories[c] || 0)) *
+                                    100
+                                )
+                              )
+                            : 0
+                        }
+                      />
                     </td>
                   </tr>
                 ))}
@@ -246,20 +275,20 @@ export default function RepoDetail({ name, repo }: RepoDetailProps) {
                   <td>Features defined</td>
                   <td className="num">{formatNumber(featuresLeftToWrite)}</td>
                   <td className="num migrated-cell">{formatNumber(cucumber)}</td>
-                  <td className="num">
-                    {potential > 0
-                      ? `${((featuresLeftToWrite / potential) * 100).toFixed(1)}%`
-                      : '—'}
+                  <td>
+                    <ProgressBar
+                      percent={potential > 0 ? Math.min(100, (cucumber / potential) * 100) : 0}
+                    />
                   </td>
                 </tr>
                 <tr>
                   <td>Features implemented</td>
                   <td className="num">{formatNumber(featuresLeftToImplement)}</td>
                   <td className="num migrated-cell">{formatNumber(implemented)}</td>
-                  <td className="num">
-                    {potential > 0
-                      ? `${((featuresLeftToImplement / potential) * 100).toFixed(1)}%`
-                      : '—'}
+                  <td>
+                    <ProgressBar
+                      percent={potential > 0 ? Math.min(100, (implemented / potential) * 100) : 0}
+                    />
                   </td>
                 </tr>
               </tbody>
