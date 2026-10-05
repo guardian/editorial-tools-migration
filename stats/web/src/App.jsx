@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import BurndownChart from './BurndownChart.jsx';
+import ProgressChart from './ProgressChart.jsx';
 
 const MIGRATED_CATEGORY = 'Migrated (TS/TSX)';
 const TO_MIGRATE_CATEGORIES = ['JavaScript', 'HTML templates', 'CSS'];
@@ -25,6 +26,31 @@ function clampPercent(n) {
   return Math.max(0, Math.min(100, n));
 }
 
+/**
+ * Combined progress line: at each timestamp across all apps, carry forward each
+ * app's last known to-migrate count and compute (baseline - current) / baseline.
+ */
+function buildTotalSeries(appList) {
+  const withData = appList.filter((a) => a.baseline > 0 && a.series.length);
+  const sumBaseline = withData.reduce((s, a) => s + a.baseline, 0);
+  if (!sumBaseline) return [];
+  const times = [...new Set(withData.flatMap((a) => a.series.map((p) => p.t)))].sort(
+    (x, y) => x - y
+  );
+  return times.map((t) => {
+    let sumCurrent = 0;
+    for (const a of withData) {
+      let current = a.baseline; // before an app's first sample it sits at baseline (0%)
+      for (const p of a.series) {
+        if (p.t <= t) current = p.toMigrate;
+        else break;
+      }
+      sumCurrent += current;
+    }
+    return [t, clampPercent(((sumBaseline - sumCurrent) / sumBaseline) * 100)];
+  });
+}
+
 export default function App() {
   const [rows, setRows] = useState(null);
   const [error, setError] = useState(null);
@@ -42,33 +68,59 @@ export default function App() {
   const model = useMemo(() => {
     if (!rows) return null;
 
+    // The CSV may hold a full per-PR history (many commits per app). Group rows
+    // into one sample per (app, commit); tables use the latest sample, the chart
+    // uses the whole time series.
     const apps = new Map();
     for (const row of rows) {
       const lines = Number(row.lines) || 0;
       if (!apps.has(row.app)) {
-        apps.set(row.app, {
-          app: row.app,
-          platform: row.platform,
-          categories: {},
+        apps.set(row.app, { app: row.app, platform: row.platform, samples: new Map() });
+      }
+      const appEntry = apps.get(row.app);
+      const key = row.commit || row.timestamp || '';
+      if (!appEntry.samples.has(key)) {
+        appEntry.samples.set(key, {
+          t: row.timestamp ? Date.parse(row.timestamp) : null,
+          baseline: Number(row.baseline) || 0,
           toMigrate: 0,
           migrated: 0,
-          baseline: Number(row.baseline) || 0,
+          categories: {},
         });
       }
-      const entry = apps.get(row.app);
-      entry.categories[row.category] = lines;
-      if (row.status === 'migrated') entry.migrated += lines;
-      else entry.toMigrate += lines;
+      const s = appEntry.samples.get(key);
+      s.categories[row.category] = lines;
+      if (row.status === 'migrated') s.migrated += lines;
+      else s.toMigrate += lines;
     }
 
     // Progress is measured by how much of the baseline Angular/Knockout code has
     // been removed (baseline - current), not from React added.
     const appList = [...apps.values()].map((a) => {
-      const total = a.toMigrate + a.migrated;
-      const percentComplete = a.baseline
-        ? clampPercent(((a.baseline - a.toMigrate) / a.baseline) * 100)
+      const samples = [...a.samples.values()].sort((x, y) => (x.t || 0) - (y.t || 0));
+      const latest = samples[samples.length - 1];
+      const series = samples
+        .filter((s) => s.t != null && s.baseline > 0)
+        .map((s) => ({
+          t: s.t,
+          toMigrate: s.toMigrate,
+          percentComplete: clampPercent(((s.baseline - s.toMigrate) / s.baseline) * 100),
+        }));
+      const total = latest.toMigrate + latest.migrated;
+      const percentComplete = latest.baseline
+        ? clampPercent(((latest.baseline - latest.toMigrate) / latest.baseline) * 100)
         : 0;
-      return { ...a, total, percentComplete };
+      return {
+        app: a.app,
+        platform: a.platform,
+        categories: latest.categories,
+        baseline: latest.baseline,
+        toMigrate: latest.toMigrate,
+        migrated: latest.migrated,
+        total,
+        percentComplete,
+        series,
+      };
     });
 
     const totals = {
@@ -86,7 +138,9 @@ export default function App() {
       lines: appList.reduce((s, a) => s + (a.categories[category] || 0), 0),
     }));
 
-    return { appList, totals, categoryTotals };
+    const totalSeries = buildTotalSeries(appList);
+
+    return { appList, totals, categoryTotals, totalSeries };
   }, [rows]);
 
   if (error) {
@@ -114,7 +168,7 @@ export default function App() {
     );
   }
 
-  const { appList, totals, categoryTotals } = model;
+  const { appList, totals, categoryTotals, totalSeries } = model;
 
   return (
     <main className="container">
@@ -212,6 +266,8 @@ export default function App() {
           </tfoot>
         </table>
       </section>
+
+      <ProgressChart appList={appList} totalSeries={totalSeries} />
 
       <BurndownChart totalToMigrate={totals.toMigrate} />
     </main>
