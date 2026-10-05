@@ -3,6 +3,7 @@ import { Typography } from '@guardian/stand/Typography';
 import { AlertBanner } from '@guardian/stand/AlertBanner';
 import BurndownChart from './BurndownChart.tsx';
 import ProgressChart from './ProgressChart.tsx';
+import RepoDetail from './RepoDetail.tsx';
 import { StatCard } from './components/StatCard.tsx';
 import { ProgressBar } from './components/ProgressBar.tsx';
 import { CoverageBar } from './components/CoverageBar.tsx';
@@ -111,9 +112,21 @@ function buildTotalSeries(appList: SeriesHolder[]): Array<[number, number]> {
   });
 }
 
+/** Tracks the current URL hash so we can route between the overview and detail views. */
+function useHashRoute(): string {
+  const [hash, setHash] = useState(() => window.location.hash);
+  useEffect(() => {
+    const onChange = () => setHash(window.location.hash);
+    window.addEventListener('hashchange', onChange);
+    return () => window.removeEventListener('hashchange', onChange);
+  }, []);
+  return hash;
+}
+
 export default function App() {
   const [rows, setRows] = useState<CsvRow[] | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const hash = useHashRoute();
 
   useEffect(() => {
     fetch('/report.csv')
@@ -294,6 +307,17 @@ export default function App() {
 
   const { appList, totals, categoryTotals, totalSeries } = model;
 
+  const repoMatch = /^#\/repo\/(.+)$/.exec(hash);
+  if (repoMatch?.[1]) {
+    const name = decodeURIComponent(repoMatch[1]);
+    return (
+      <>
+        <AppTopBar />
+        <RepoDetail name={name} repo={appList.find((a) => a.app === name)} />
+      </>
+    );
+  }
+
   return (
     <>
       <AppTopBar />
@@ -328,7 +352,9 @@ export default function App() {
           <tbody>
             {appList.map((a) => (
               <tr key={a.app}>
-                <td>{a.app}</td>
+                <td>
+                  <a href={`#/repo/${encodeURIComponent(a.app)}`}>{a.app}</a>
+                </td>
                 <td>
                   <PlatformBadge platform={a.platform} />
                 </td>

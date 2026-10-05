@@ -98,6 +98,19 @@ code {
   border-radius: 6px;
 }
 
+a {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+.back-link {
+  margin: 0 0 1rem;
+}
+
 .velocity-control {
   background: var(--panel);
   border: 1px solid var(--border);
