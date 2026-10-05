@@ -27,6 +27,22 @@ The CSV (`report.csv`) has one row per app + category with these columns:
 `commit` and `timestamp` record the git commit the numbers were measured at and
 its committer date (ISO 8601), so changes can be tracked over time.
 
+### What counts as framework code
+
+JavaScript/TypeScript files are only counted when their imports show they belong
+to a framework we track, so build scripts, config, and other unrelated `.js`/
+`.ts` files are excluded. Each repo looks for React (the migrated target) plus
+its source platform:
+
+- **React** (migrated): imports/requires of `react`, `react-dom`, or
+  `@emotion/react`/`@emotion/styled`. An explicit React import is required even
+  for `.jsx`/`.tsx`.
+- **Angular**: `@angular/*` or `angular` imports, or `angular.module(` /
+  `.component(` / `.controller(` / `.directive(` (and similar) usage.
+- **Knockout**: `knockout` imports or `ko.observable`/`ko.applyBindings` usage.
+
+HTML templates and CSS are always counted by extension.
+
 ### History mode
 
 To track progress over time, history mode samples migration progress **per

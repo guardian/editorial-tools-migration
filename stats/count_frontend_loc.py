@@ -29,6 +29,7 @@ from __future__ import annotations
 import argparse
 import csv
 import json
+import re
 import shutil
 import subprocess
 import sys
@@ -60,6 +61,9 @@ REPOS: list[Repo] = [
 # Frontend code is grouped into categories. TypeScript / TSX is treated as
 # code that has *already* been migrated to the target React/TS stack; the
 # remaining categories represent code that still needs to be migrated.
+# JavaScript / TypeScript files are only counted when their imports show they
+# belong to a framework we track (see FRAMEWORK_PATTERNS), so unrelated tooling
+# and config scripts are not mistaken for app code.
 MIGRATED_CATEGORY = "Migrated (TS/TSX)"
 
 CATEGORIES: dict[str, set[str]] = {
@@ -81,6 +85,61 @@ EXT_TO_CATEGORY: dict[str, str] = {
 
 # File extensions we treat as frontend source code.
 FRONTEND_EXTENSIONS: set[str] = set(EXT_TO_CATEGORY)
+
+# JavaScript / TypeScript source whose relevance is confirmed by scanning the
+# file's imports; HTML and CSS are always counted by extension.
+CODE_EXTENSIONS: set[str] = CATEGORIES["JavaScript"] | CATEGORIES[MIGRATED_CATEGORY]
+
+# Source platform (per repo) -> the framework its to-migrate code imports.
+PLATFORM_FRAMEWORK: dict[str, str] = {
+    "Angular": "angular",
+    "Knockout": "knockout",
+}
+
+# A code file counts only if it imports one of these frameworks. React is always
+# relevant (the migrated target); each repo also looks for its source platform.
+# The quoted-module patterns match both `import ... from 'x'` and `require('x')`.
+FRAMEWORK_PATTERNS: dict[str, list["re.Pattern[str]"]] = {
+    "react": [
+        re.compile(r"""['\"]react(?:-dom)?(?:/[\w.-]+)*['\"]"""),
+        re.compile(r"""['\"]@emotion/(?:react|styled)['\"]"""),
+    ],
+    "angular": [
+        re.compile(r"""['\"]@angular/[\w./-]+['\"]"""),
+        re.compile(r"""['\"]angular(?:[-/][\w./-]*)?['\"]"""),
+        re.compile(
+            r"""\bangular\s*\.\s*"""
+            r"""(?:module|component|controller|directive|service|factory|"""
+            r"""filter|value|constant|provider|run|config)\s*\("""
+        ),
+    ],
+    "knockout": [
+        re.compile(r"""['\"]knockout['\"]"""),
+        re.compile(
+            r"""\bko\s*\.\s*"""
+            r"""(?:observable|observableArray|computed|pureComputed|"""
+            r"""applyBindings|bindingHandlers|components)\b"""
+        ),
+    ],
+}
+
+
+def relevant_frameworks(platform: str) -> set[str]:
+    """Frameworks whose imports mark a code file as relevant for this repo."""
+    frameworks = {"react"}
+    source = PLATFORM_FRAMEWORK.get(platform)
+    if source:
+        frameworks.add(source)
+    return frameworks
+
+
+def detect_frameworks(text: str, candidates: set[str]) -> set[str]:
+    """Return the subset of `candidates` whose import signatures appear in text."""
+    found: set[str] = set()
+    for framework in candidates:
+        if any(pattern.search(text) for pattern in FRAMEWORK_PATTERNS[framework]):
+            found.add(framework)
+    return found
 
 # Directory names anywhere in the path that should be skipped. These are
 # dependency, build output, and vendored folders that are not code we would
@@ -290,17 +349,17 @@ class RepoStats:
         return self.by_category.get(MIGRATED_CATEGORY, 0)
 
 
-def count_lines(path: Path) -> int:
-    """Count lines in a file, tolerating binary / undecodable content."""
+def read_text(path: Path) -> str | None:
+    """Read a file as UTF-8 text, returning None if it can't be read."""
     try:
-        with path.open("r", encoding="utf-8", errors="ignore") as fh:
-            return sum(1 for _ in fh)
+        return path.read_text(encoding="utf-8", errors="ignore")
     except OSError:
-        return 0
+        return None
 
 
 def analyse_repo(repo: Repo, repo_root: Path) -> RepoStats:
     stats = RepoStats(repo=repo)
+    candidates = relevant_frameworks(repo.platform)
     for path in repo_root.rglob("*"):
         if not path.is_file():
             continue
@@ -308,8 +367,16 @@ def analyse_repo(repo: Repo, repo_root: Path) -> RepoStats:
             continue
         if not is_frontend_file(path):
             continue
-        lines = count_lines(path)
-        category = EXT_TO_CATEGORY[path.suffix.lower()]
+        text = read_text(path)
+        if text is None:
+            continue
+        ext = path.suffix.lower()
+        # Code files count only when their imports show they use a framework we
+        # track; HTML/CSS are always counted.
+        if ext in CODE_EXTENSIONS and not detect_frameworks(text, candidates):
+            continue
+        lines = len(text.splitlines())
+        category = EXT_TO_CATEGORY[ext]
         stats.by_category[category] = stats.by_category.get(category, 0) + lines
         stats.total_lines += lines
         stats.total_files += 1
