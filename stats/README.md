@@ -22,10 +22,29 @@ python3 count_frontend_loc.py --refresh  # re-pull latest before counting
 
 The CSV (`report.csv`) has one row per app + category with these columns:
 
-`app, platform, category, status, lines, commit, timestamp`
+`app, platform, category, status, lines, commit, timestamp, baseline, percent_complete`
 
 `commit` and `timestamp` record the git commit the numbers were measured at and
 its committer date (ISO 8601), so changes can be tracked over time.
+
+### Measuring progress
+
+Progress is measured by how much of the original Angular/Knockout code has been
+**removed**, not by how much React has been added (React is kept in the report
+for analysis, but excluded from the percentage):
+
+```
+percent_complete = clamp((baseline - current_to_migrate) / baseline, 0, 100)
+```
+
+`baseline` is the Angular/Knockout lines of code at the start of the migration,
+set per app via `baseline` (a commit SHA) and `baseline_loc` on each entry in
+`REPOS`. The baselines currently in `REPOS` were derived from a pull request on
+each repo merged around five months before this was recorded; `baseline_loc` is
+the Angular/Knockout line count measured at that commit. The `baseline` and
+`percent_complete` columns are written to the CSV (and shown in the console
+report and the dashboard) for every measured commit, so the percentage reflects
+source code retired over time.
 
 ### What counts as framework code
 

@@ -21,6 +21,10 @@ function formatNumber(n) {
   return n.toLocaleString('en-GB');
 }
 
+function clampPercent(n) {
+  return Math.max(0, Math.min(100, n));
+}
+
 export default function App() {
   const [rows, setRows] = useState(null);
   const [error, setError] = useState(null);
@@ -48,6 +52,7 @@ export default function App() {
           categories: {},
           toMigrate: 0,
           migrated: 0,
+          baseline: Number(row.baseline) || 0,
         });
       }
       const entry = apps.get(row.app);
@@ -56,18 +61,24 @@ export default function App() {
       else entry.toMigrate += lines;
     }
 
+    // Progress is measured by how much of the baseline Angular/Knockout code has
+    // been removed (baseline - current), not from React added.
     const appList = [...apps.values()].map((a) => {
       const total = a.toMigrate + a.migrated;
-      return { ...a, total, percentMigrated: total ? (a.migrated / total) * 100 : 0 };
+      const percentComplete = a.baseline
+        ? clampPercent(((a.baseline - a.toMigrate) / a.baseline) * 100)
+        : 0;
+      return { ...a, total, percentComplete };
     });
 
     const totals = {
+      baseline: appList.reduce((s, a) => s + a.baseline, 0),
       toMigrate: appList.reduce((s, a) => s + a.toMigrate, 0),
       migrated: appList.reduce((s, a) => s + a.migrated, 0),
     };
     totals.total = totals.toMigrate + totals.migrated;
-    totals.percentMigrated = totals.total
-      ? (totals.migrated / totals.total) * 100
+    totals.percentComplete = totals.baseline
+      ? clampPercent(((totals.baseline - totals.toMigrate) / totals.baseline) * 100)
       : 0;
 
     const categoryTotals = TO_MIGRATE_CATEGORIES.map((category) => ({
@@ -116,9 +127,9 @@ export default function App() {
 
       <section className="cards">
         <StatCard label="Lines to migrate" value={formatNumber(totals.toMigrate)} accent="warn" />
-        <StatCard label="Lines migrated" value={formatNumber(totals.migrated)} accent="good" />
-        <StatCard label="Total frontend lines" value={formatNumber(totals.total)} />
-        <StatCard label="Migrated" value={`${totals.percentMigrated.toFixed(1)}%`} accent="good" />
+        <StatCard label="Lines migrated (React)" value={formatNumber(totals.migrated)} accent="good" />
+        <StatCard label="Baseline" value={formatNumber(totals.baseline)} />
+        <StatCard label="Complete" value={`${totals.percentComplete.toFixed(1)}%`} accent="good" />
       </section>
 
       <section>
@@ -128,9 +139,9 @@ export default function App() {
             <tr>
               <th>App</th>
               <th>Platform</th>
+              <th className="num">Baseline</th>
               <th className="num">To migrate</th>
               <th className="num">Migrated</th>
-              <th className="num">Total</th>
               <th>Progress</th>
             </tr>
           </thead>
@@ -141,11 +152,11 @@ export default function App() {
                 <td>
                   <span className={`badge ${a.platform.toLowerCase()}`}>{a.platform}</span>
                 </td>
+                <td className="num">{formatNumber(a.baseline)}</td>
                 <td className="num">{formatNumber(a.toMigrate)}</td>
                 <td className="num">{formatNumber(a.migrated)}</td>
-                <td className="num">{formatNumber(a.total)}</td>
                 <td>
-                  <ProgressBar percent={a.percentMigrated} />
+                  <ProgressBar percent={a.percentComplete} />
                 </td>
               </tr>
             ))}
@@ -154,11 +165,11 @@ export default function App() {
             <tr>
               <td>Total</td>
               <td></td>
+              <td className="num">{formatNumber(totals.baseline)}</td>
               <td className="num">{formatNumber(totals.toMigrate)}</td>
               <td className="num">{formatNumber(totals.migrated)}</td>
-              <td className="num">{formatNumber(totals.total)}</td>
               <td>
-                <ProgressBar percent={totals.percentMigrated} />
+                <ProgressBar percent={totals.percentComplete} />
               </td>
             </tr>
           </tfoot>

@@ -1,21 +1,21 @@
-app,platform,category,status,lines
-Workflow,Angular,JavaScript,to_migrate,8637
-Workflow,Angular,HTML templates,to_migrate,2757
-Workflow,Angular,CSS,to_migrate,3655
-Workflow,Angular,Migrated (TS/TSX),migrated,706
-Grid,Angular,JavaScript,to_migrate,15825
-Grid,Angular,HTML templates,to_migrate,5444
-Grid,Angular,CSS,to_migrate,5657
-Grid,Angular,Migrated (TS/TSX),migrated,6690
-Restorer,Angular,JavaScript,to_migrate,1620
-Restorer,Angular,HTML templates,to_migrate,392
-Restorer,Angular,CSS,to_migrate,1894
-Restorer,Angular,Migrated (TS/TSX),migrated,0
-Fronts,Knockout,JavaScript,to_migrate,41503
-Fronts,Knockout,HTML templates,to_migrate,1898
-Fronts,Knockout,CSS,to_migrate,2868
-Fronts,Knockout,Migrated (TS/TSX),migrated,54018
-Story Packages,Knockout,JavaScript,to_migrate,14098
-Story Packages,Knockout,HTML templates,to_migrate,885
-Story Packages,Knockout,CSS,to_migrate,2349
-Story Packages,Knockout,Migrated (TS/TSX),migrated,0
+app,platform,category,status,lines,commit,timestamp,baseline,percent_complete
+Workflow,Angular,JavaScript,to_migrate,6125,b3d6cc96dbf7a99b48a417e50394625db3ad8e2a,2026-09-25T11:05:22+01:00,12362,0.0
+Workflow,Angular,HTML templates,to_migrate,2757,b3d6cc96dbf7a99b48a417e50394625db3ad8e2a,2026-09-25T11:05:22+01:00,12362,0.0
+Workflow,Angular,CSS,to_migrate,3655,b3d6cc96dbf7a99b48a417e50394625db3ad8e2a,2026-09-25T11:05:22+01:00,12362,0.0
+Workflow,Angular,Migrated (TS/TSX),migrated,143,b3d6cc96dbf7a99b48a417e50394625db3ad8e2a,2026-09-25T11:05:22+01:00,12362,0.0
+Grid,Angular,JavaScript,to_migrate,14923,7c8ed5f7dda7cb5559089b11941f220ae5ffabae,2026-10-05T11:30:37+01:00,25593,0.0
+Grid,Angular,HTML templates,to_migrate,5523,7c8ed5f7dda7cb5559089b11941f220ae5ffabae,2026-10-05T11:30:37+01:00,25593,0.0
+Grid,Angular,CSS,to_migrate,5811,7c8ed5f7dda7cb5559089b11941f220ae5ffabae,2026-10-05T11:30:37+01:00,25593,0.0
+Grid,Angular,Migrated (TS/TSX),migrated,3879,7c8ed5f7dda7cb5559089b11941f220ae5ffabae,2026-10-05T11:30:37+01:00,25593,0.0
+Restorer,Angular,JavaScript,to_migrate,103,7bf0a84dc9af52110e3209b66afa682d824240e6,2026-10-01T11:07:17+01:00,3834,85.8
+Restorer,Angular,HTML templates,to_migrate,48,7bf0a84dc9af52110e3209b66afa682d824240e6,2026-10-01T11:07:17+01:00,3834,85.8
+Restorer,Angular,CSS,to_migrate,393,7bf0a84dc9af52110e3209b66afa682d824240e6,2026-10-01T11:07:17+01:00,3834,85.8
+Restorer,Angular,Migrated (TS/TSX),migrated,2382,7bf0a84dc9af52110e3209b66afa682d824240e6,2026-10-01T11:07:17+01:00,3834,85.8
+Fronts,Knockout,JavaScript,to_migrate,8202,3e39729e47b1643c791f97b492aa1182c6997b8b,2026-10-02T14:29:08+01:00,12891,0.0
+Fronts,Knockout,HTML templates,to_migrate,1905,3e39729e47b1643c791f97b492aa1182c6997b8b,2026-10-02T14:29:08+01:00,12891,0.0
+Fronts,Knockout,CSS,to_migrate,2868,3e39729e47b1643c791f97b492aa1182c6997b8b,2026-10-02T14:29:08+01:00,12891,0.0
+Fronts,Knockout,Migrated (TS/TSX),migrated,23898,3e39729e47b1643c791f97b492aa1182c6997b8b,2026-10-02T14:29:08+01:00,12891,0.0
+Story Packages,Knockout,JavaScript,to_migrate,4607,690902adba47dfce6ca4ff91dae5048020708e54,2026-09-28T15:05:33+01:00,7841,0.0
+Story Packages,Knockout,HTML templates,to_migrate,885,690902adba47dfce6ca4ff91dae5048020708e54,2026-09-28T15:05:33+01:00,7841,0.0
+Story Packages,Knockout,CSS,to_migrate,2349,690902adba47dfce6ca4ff91dae5048020708e54,2026-09-28T15:05:33+01:00,7841,0.0
+Story Packages,Knockout,Migrated (TS/TSX),migrated,0,690902adba47dfce6ca4ff91dae5048020708e54,2026-09-28T15:05:33+01:00,7841,0.0

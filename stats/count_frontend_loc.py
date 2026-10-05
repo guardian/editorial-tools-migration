@@ -46,14 +46,18 @@ class Repo:
     # Baseline commit for history mode: the first commit on main to report from.
     # Can also be supplied/overridden on the command line via --baseline.
     baseline: str | None = None
+    # Angular/Knockout lines of code at the start of the migration. Migration
+    # progress is measured as how much of this baseline has since been removed,
+    # not from React added. Derived from the `baseline` commit (see REPOS).
+    baseline_loc: int | None = None
 
 
 REPOS: list[Repo] = [
-    Repo("Workflow", "Angular", "https://github.com/guardian/workflow-frontend"),
-    Repo("Grid", "Angular", "https://github.com/guardian/grid"),
-    Repo("Restorer", "Angular", "https://github.com/guardian/flexible-restorer"),
-    Repo("Fronts", "Knockout", "https://github.com/guardian/facia-tool"),
-    Repo("Story Packages", "Knockout", "https://github.com/guardian/story-packages"),
+    Repo("Workflow", "Angular", "https://github.com/guardian/workflow-frontend", baseline="5c1f3b0f09bd7f4813c82eabe988d931f7978aeb", baseline_loc=12362),
+    Repo("Grid", "Angular", "https://github.com/guardian/grid", baseline="c455c353f08adbffafaa3427d0675615d7efacc7", baseline_loc=25593),
+    Repo("Restorer", "Angular", "https://github.com/guardian/flexible-restorer", baseline="fa466dee9e8b59496ed0f4ce578d4d5becd69ba0", baseline_loc=3834),
+    Repo("Fronts", "Knockout", "https://github.com/guardian/facia-tool", baseline="0b16232d7b317b83c7a3bfd5f4d4a1af58a35920", baseline_loc=12891),
+    Repo("Story Packages", "Knockout", "https://github.com/guardian/story-packages", baseline="ac79901243069b52ce625d0231fe979b7dffdba4", baseline_loc=7841),
 ]
 
 # --- What counts as "frontend" code -----------------------------------------
@@ -385,6 +389,17 @@ def analyse_repo(repo: Repo, repo_root: Path) -> RepoStats:
 
 # --- Reporting ---------------------------------------------------------------
 
+def percent_complete(baseline: int | None, current: int) -> float | None:
+    """Progress as Angular/Knockout lines removed vs the baseline, clamped 0-100."""
+    if not baseline or baseline <= 0:
+        return None
+    return max(0.0, min(100.0, (baseline - current) / baseline * 100))
+
+
+def _fmt_pct(pct: float | None) -> str:
+    return f"{pct:.1f}%" if pct is not None else "-"
+
+
 def print_report(all_stats: list[RepoStats]) -> None:
     # --- Per-application summary (one row per app) ---------------------------
     print("\n" + "=" * 78)
@@ -393,28 +408,34 @@ def print_report(all_stats: list[RepoStats]) -> None:
 
     summary_header = (
         f"{'App':<16} {'Platform':<10} {'Files':>8} "
-        f"{'To migrate':>12} {'Migrated':>12}"
+        f"{'Baseline':>12} {'To migrate':>12} {'Migrated':>12} {'Complete':>9}"
     )
     print(summary_header)
     print("-" * len(summary_header))
 
     grand_files = 0
+    grand_baseline = 0
     grand_to_migrate = 0
     grand_migrated = 0
     for stats in all_stats:
+        baseline = stats.repo.baseline_loc or 0
+        pct = percent_complete(stats.repo.baseline_loc, stats.to_migrate)
         print(
             f"{stats.repo.app:<16} {stats.repo.platform:<10} "
-            f"{stats.total_files:>8,} {stats.to_migrate:>12,} "
-            f"{stats.migrated:>12,}"
+            f"{stats.total_files:>8,} {baseline:>12,} {stats.to_migrate:>12,} "
+            f"{stats.migrated:>12,} {_fmt_pct(pct):>9}"
         )
         grand_files += stats.total_files
+        grand_baseline += baseline
         grand_to_migrate += stats.to_migrate
         grand_migrated += stats.migrated
 
     print("-" * len(summary_header))
+    grand_pct = percent_complete(grand_baseline, grand_to_migrate)
     print(
         f"{'TOTAL':<16} {'':<10} {grand_files:>8,} "
-        f"{grand_to_migrate:>12,} {grand_migrated:>12,}"
+        f"{grand_baseline:>12,} {grand_to_migrate:>12,} {grand_migrated:>12,} "
+        f"{_fmt_pct(grand_pct):>9}"
     )
 
     # --- Detailed per-application category breakdown ------------------------
@@ -465,11 +486,21 @@ def print_report(all_stats: list[RepoStats]) -> None:
     print(f"{'TOTAL':<18} {grand_to_migrate:>12,} {grand_migrated:>12,}")
 
 
-CSV_FIELDS = ["app", "platform", "category", "status", "lines", "commit", "timestamp"]
+CSV_FIELDS = [
+    "app", "platform", "category", "status", "lines",
+    "commit", "timestamp", "baseline", "percent_complete",
+]
 
 
 def stats_to_rows(stats: RepoStats, commit: str, timestamp: str) -> list[dict]:
-    """Turn a RepoStats into tidy (long) CSV rows, one per category."""
+    """Turn a RepoStats into tidy (long) CSV rows, one per category.
+
+    Each row carries the app's Angular/Knockout baseline and the resulting
+    percent-complete (baseline removed vs baseline), so progress is measured by
+    source code removed rather than React added.
+    """
+    baseline = stats.repo.baseline_loc
+    pct = percent_complete(baseline, stats.to_migrate)
     rows: list[dict] = []
     for category in CATEGORIES:
         lines = stats.by_category.get(category, 0)
@@ -483,6 +514,8 @@ def stats_to_rows(stats: RepoStats, commit: str, timestamp: str) -> list[dict]:
                 "lines": lines,
                 "commit": commit,
                 "timestamp": timestamp,
+                "baseline": baseline if baseline else "",
+                "percent_complete": f"{pct:.1f}" if pct is not None else "",
             }
         )
     return rows
