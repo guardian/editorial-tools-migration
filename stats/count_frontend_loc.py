@@ -6,18 +6,29 @@ For each repository listed below the script performs a shallow git clone
 code, broken down by file extension. This supports the migration project of
 moving these apps from their current platform (Angular / Knockout) to React.
 
-No third-party dependencies are required - only Python 3.8+ and git.
+No third-party dependencies are required - only Python 3.8+ and git. History
+mode additionally uses the GitHub CLI (`gh`, authenticated) to read merged PRs.
 
 Usage:
-    python3 count_frontend_loc.py                # count all repos
+    python3 count_frontend_loc.py                # count all repos at current HEAD
     python3 count_frontend_loc.py --refresh      # re-pull latest before counting
     python3 count_frontend_loc.py --workdir DIR  # where to cache the clones
+
+    # History mode: sample migration progress at pull-request granularity. For
+    # each merged PR on main that landed after the per-repo baseline commit, the
+    # PR's final commit (GitHub's merge_commit_sha) is checked out and its lines
+    # of code recorded, together with that commit hash and its timestamp. By
+    # default only commits not already in the CSV are appended; pass --overwrite
+    # to regenerate the whole history from scratch.
+    python3 count_frontend_loc.py --history \\
+        --baseline 'Grid=abc1234' --baseline 'Workflow=def5678'
 """
 
 from __future__ import annotations
 
 import argparse
 import csv
+import json
 import shutil
 import subprocess
 import sys
@@ -31,6 +42,9 @@ class Repo:
     app: str
     platform: str
     url: str
+    # Baseline commit for history mode: the first commit on main to report from.
+    # Can also be supplied/overridden on the command line via --baseline.
+    baseline: str | None = None
 
 
 REPOS: list[Repo] = [
@@ -106,20 +120,35 @@ def is_frontend_file(path: Path) -> bool:
 
 # --- Git helpers -------------------------------------------------------------
 
-def clone_or_update(repo: Repo, workdir: Path, refresh: bool) -> Path:
-    """Shallow-clone the repo into workdir, or update it if already present."""
+def clone_or_update(
+    repo: Repo, workdir: Path, refresh: bool, full: bool = False
+) -> Path:
+    """Clone the repo into workdir, or update it if already present.
+
+    `full=True` fetches the complete history, which history mode needs to walk
+    commits; otherwise a shallow (depth 1) clone is used for a quick snapshot.
+    """
     dest = workdir / repo.url.rstrip("/").split("/")[-1]
     if dest.exists():
         if refresh:
             print(f"  Updating {dest.name} ...")
-            _run(["git", "-C", str(dest), "fetch", "--depth", "1", "origin"])
+            if full:
+                _run(["git", "-C", str(dest), "fetch", "origin"])
+            else:
+                _run(["git", "-C", str(dest), "fetch", "--depth", "1", "origin"])
             _run(["git", "-C", str(dest), "reset", "--hard", "origin/HEAD"])
         else:
             print(f"  Using cached {dest.name}")
+        if full and is_shallow(dest):
+            print(f"  Fetching full history for {dest.name} ...")
+            _run(["git", "-C", str(dest), "fetch", "--unshallow", "origin"])
         return dest
 
     print(f"  Cloning {repo.url} ...")
-    _run(["git", "clone", "--depth", "1", repo.url, str(dest)])
+    if full:
+        _run(["git", "clone", repo.url, str(dest)])
+    else:
+        _run(["git", "clone", "--depth", "1", repo.url, str(dest)])
     return dest
 
 
@@ -129,6 +158,116 @@ def _run(cmd: list[str]) -> None:
         raise RuntimeError(
             f"Command failed: {' '.join(cmd)}\n{result.stderr.strip()}"
         )
+
+
+def _capture(cmd: list[str]) -> str:
+    """Run a command and return its stripped stdout, raising on failure."""
+    result = subprocess.run(cmd, capture_output=True, text=True)
+    if result.returncode != 0:
+        raise RuntimeError(
+            f"Command failed: {' '.join(cmd)}\n{result.stderr.strip()}"
+        )
+    return result.stdout.strip()
+
+
+def is_shallow(repo_root: Path) -> bool:
+    try:
+        return _capture(
+            ["git", "-C", str(repo_root), "rev-parse", "--is-shallow-repository"]
+        ) == "true"
+    except RuntimeError:
+        return False
+
+
+def default_branch_ref(repo_root: Path) -> str:
+    """Return the remote-tracking ref for main, e.g. 'origin/main'."""
+    try:
+        return _capture(
+            ["git", "-C", str(repo_root), "rev-parse", "--abbrev-ref", "origin/HEAD"]
+        )
+    except RuntimeError:
+        # origin/HEAD may be unset on a fresh clone; try to populate it.
+        try:
+            _run(["git", "-C", str(repo_root), "remote", "set-head", "origin", "-a"])
+            return _capture(
+                ["git", "-C", str(repo_root), "rev-parse", "--abbrev-ref", "origin/HEAD"]
+            )
+        except RuntimeError:
+            return "origin/HEAD"
+
+
+def head_commit(repo_root: Path) -> str:
+    return _capture(["git", "-C", str(repo_root), "rev-parse", "HEAD"])
+
+
+def commit_timestamp(repo_root: Path, sha: str) -> str:
+    """Return the committer date of `sha` in ISO 8601 format."""
+    return _capture(["git", "-C", str(repo_root), "show", "-s", "--format=%cI", sha])
+
+
+def repo_slug(repo: Repo) -> str:
+    """Derive the GitHub 'owner/name' slug from the repo URL."""
+    return "/".join(repo.url.rstrip("/").removesuffix(".git").split("/")[-2:])
+
+
+def is_after_baseline(repo_root: Path, baseline: str, sha: str) -> bool:
+    """True if `sha` is a strict descendant of `baseline` (landed after it)."""
+    if sha == baseline:
+        return False
+    result = subprocess.run(
+        ["git", "-C", str(repo_root), "merge-base", "--is-ancestor", baseline, sha],
+        capture_output=True,
+        text=True,
+    )
+    return result.returncode == 0
+
+
+def list_pr_commits(
+    repo: Repo, repo_root: Path, baseline: str, limit: int
+) -> list[tuple[str, int | None]]:
+    """Merged PRs that landed on main after `baseline`, oldest first.
+
+    Returns (merge_commit_sha, pr_number) pairs. PRs are squash/rebase merged, so
+    each PR's merge_commit_sha is the single commit it produced on main - this
+    samples history at pull-request granularity rather than per commit.
+    """
+    slug = repo_slug(repo)
+    ref = default_branch_ref(repo_root)
+    base = ref.split("/", 1)[1] if "/" in ref else ref
+    out = _capture(
+        [
+            "gh", "pr", "list",
+            "--repo", slug,
+            "--state", "merged",
+            "--base", base,
+            "--json", "number,mergeCommit,mergedAt",
+            "--limit", str(limit),
+        ]
+    )
+    prs = json.loads(out) if out else []
+    prs.sort(key=lambda pr: pr.get("mergedAt") or "")
+
+    sampled: list[tuple[str, int | None]] = []
+    for pr in prs:
+        merge_commit = pr.get("mergeCommit") or {}
+        sha = merge_commit.get("oid")
+        if sha and is_after_baseline(repo_root, baseline, sha):
+            sampled.append((sha, pr.get("number")))
+    return sampled
+
+
+def checkout_commit(repo_root: Path, sha: str) -> None:
+    _run(["git", "-C", str(repo_root), "checkout", "--quiet", "--force", sha])
+
+
+def restore_default_branch(repo_root: Path) -> None:
+    """Return the working tree to the tip of main after walking history."""
+    ref = default_branch_ref(repo_root)
+    branch = ref.split("/", 1)[1] if "/" in ref else ref
+    try:
+        _run(["git", "-C", str(repo_root), "checkout", "--quiet", "--force", branch])
+    except RuntimeError:
+        pass
 
 
 # --- Counting ----------------------------------------------------------------
@@ -259,24 +398,162 @@ def print_report(all_stats: list[RepoStats]) -> None:
     print(f"{'TOTAL':<18} {grand_to_migrate:>12,} {grand_migrated:>12,}")
 
 
-def write_csv(all_stats: list[RepoStats], csv_path: Path) -> None:
-    """Write the report in tidy (long) format: one row per app + category."""
+CSV_FIELDS = ["app", "platform", "category", "status", "lines", "commit", "timestamp"]
+
+
+def stats_to_rows(stats: RepoStats, commit: str, timestamp: str) -> list[dict]:
+    """Turn a RepoStats into tidy (long) CSV rows, one per category."""
+    rows: list[dict] = []
+    for category in CATEGORIES:
+        lines = stats.by_category.get(category, 0)
+        status = "migrated" if category == MIGRATED_CATEGORY else "to_migrate"
+        rows.append(
+            {
+                "app": stats.repo.app,
+                "platform": stats.repo.platform,
+                "category": category,
+                "status": status,
+                "lines": lines,
+                "commit": commit,
+                "timestamp": timestamp,
+            }
+        )
+    return rows
+
+
+def existing_app_commits(csv_path: Path) -> set[tuple[str, str]]:
+    """Return the (app, commit) pairs already recorded in the CSV."""
+    seen: set[tuple[str, str]] = set()
+    if not csv_path.exists():
+        return seen
+    with csv_path.open(newline="", encoding="utf-8") as fh:
+        for row in csv.DictReader(fh):
+            commit = row.get("commit")
+            if commit:
+                seen.add((row["app"], commit))
+    return seen
+
+
+def write_csv(rows: list[dict], csv_path: Path, append: bool = False) -> None:
+    """Write tidy (long) rows to the CSV, overwriting or appending.
+
+    When appending to an existing file the header is not repeated; otherwise the
+    file is (re)created with a header row.
+    """
     csv_path.parent.mkdir(parents=True, exist_ok=True)
-    with csv_path.open("w", newline="", encoding="utf-8") as fh:
-        writer = csv.writer(fh)
-        writer.writerow(["app", "platform", "category", "status", "lines"])
-        for stats in all_stats:
-            for category in CATEGORIES:
-                lines = stats.by_category.get(category, 0)
-                status = (
-                    "migrated"
-                    if category == MIGRATED_CATEGORY
-                    else "to_migrate"
+    appending = append and csv_path.exists()
+    with csv_path.open("a" if appending else "w", newline="", encoding="utf-8") as fh:
+        writer = csv.DictWriter(fh, fieldnames=CSV_FIELDS)
+        if not appending:
+            writer.writeheader()
+        writer.writerows(rows)
+    verb = "appended to" if appending else "written to"
+    print(f"\n{len(rows)} rows {verb} {csv_path}")
+
+
+def resolve_baselines(cli_baselines: list[str] | None) -> dict[str, str]:
+    """Build an app -> baseline-commit map from REPOS plus CLI overrides."""
+    baselines = {repo.app: repo.baseline for repo in REPOS if repo.baseline}
+    for item in cli_baselines or []:
+        if "=" not in item:
+            raise SystemExit(
+                f"--baseline must be in APP=SHA form, got: {item!r}"
+            )
+        app, sha = item.split("=", 1)
+        baselines[app.strip()] = sha.strip()
+    return baselines
+
+
+def copy_to_web(csv_path: Path) -> None:
+    """Keep the React app's copy in sync so `npm run dev` shows fresh data."""
+    web_public = Path("web/public/report.csv")
+    if web_public.parent.exists():
+        shutil.copyfile(csv_path, web_public)
+        print(f"CSV copied to {web_public}")
+
+
+def run_snapshot(args: argparse.Namespace) -> int:
+    all_stats: list[RepoStats] = []
+    all_rows: list[dict] = []
+    for repo in REPOS:
+        print(f"\n{repo.app} ({repo.platform})")
+        try:
+            repo_root = clone_or_update(repo, args.workdir, args.refresh)
+            commit = head_commit(repo_root)
+            timestamp = commit_timestamp(repo_root, commit)
+        except RuntimeError as exc:
+            print(f"  ERROR: {exc}", file=sys.stderr)
+            continue
+        stats = analyse_repo(repo, repo_root)
+        all_stats.append(stats)
+        all_rows.extend(stats_to_rows(stats, commit, timestamp))
+        print(f"  {stats.total_files:,} files, {stats.total_lines:,} lines")
+
+    if all_stats:
+        print_report(all_stats)
+        write_csv(all_rows, args.csv, append=False)
+        copy_to_web(args.csv)
+    return 0
+
+
+def run_history(args: argparse.Namespace) -> int:
+    baselines = resolve_baselines(args.baseline)
+    append = not args.overwrite
+    seen = existing_app_commits(args.csv) if append else set()
+
+    new_rows: list[dict] = []
+    for repo in REPOS:
+        baseline = baselines.get(repo.app)
+        if not baseline:
+            print(f"\n{repo.app}: no baseline commit configured, skipping")
+            continue
+
+        print(f"\n{repo.app} ({repo.platform})")
+        try:
+            repo_root = clone_or_update(repo, args.workdir, args.refresh, full=True)
+            baseline_sha = _capture(
+                ["git", "-C", str(repo_root), "rev-parse", baseline]
+            )
+            samples = [(baseline_sha, None), *list_pr_commits(
+                repo, repo_root, baseline_sha, args.pr_limit
+            )]
+        except RuntimeError as exc:
+            print(f"  ERROR: {exc}", file=sys.stderr)
+            continue
+
+        print(f"  {len(samples)} sample(s): baseline + merged PRs since it")
+        recorded = 0
+        try:
+            for sha, pr in samples:
+                if append and (repo.app, sha) in seen:
+                    continue
+                try:
+                    checkout_commit(repo_root, sha)
+                    timestamp = commit_timestamp(repo_root, sha)
+                except RuntimeError as exc:
+                    print(f"  ERROR at {sha[:10]}: {exc}", file=sys.stderr)
+                    continue
+                stats = analyse_repo(repo, repo_root)
+                new_rows.extend(stats_to_rows(stats, sha, timestamp))
+                recorded += 1
+                label = f"PR #{pr}" if pr else "baseline"
+                print(
+                    f"  {sha[:10]}  {timestamp}  {label:>10}  "
+                    f"{stats.total_lines:,} lines ({stats.total_files:,} files)"
                 )
-                writer.writerow(
-                    [stats.repo.app, stats.repo.platform, category, status, lines]
-                )
-    print(f"\nCSV written to {csv_path}")
+        finally:
+            restore_default_branch(repo_root)
+        print(f"  recorded {recorded} new sample(s)")
+
+    if new_rows:
+        write_csv(new_rows, args.csv, append=append)
+        print(
+            "History mode records one row per PR; the React dashboard "
+            "expects a single snapshot, so web/public/report.csv was not updated."
+        )
+    else:
+        print("\nNo new PRs to record.")
+    return 0
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -298,31 +575,48 @@ def main(argv: list[str] | None = None) -> int:
         default=Path("report.csv"),
         help="Path to write the CSV report (default: report.csv)",
     )
+    parser.add_argument(
+        "--history",
+        action="store_true",
+        help=(
+            "Sample migration progress per merged PR on main (via the gh CLI): "
+            "for each PR landed after the per-repo baseline commit, record LOC "
+            "at the PR's final commit"
+        ),
+    )
+    parser.add_argument(
+        "--baseline",
+        action="append",
+        metavar="APP=SHA",
+        help=(
+            "Baseline commit for a repo in history mode, e.g. "
+            "--baseline 'Grid=abc1234'. Repeatable; overrides REPOS baselines"
+        ),
+    )
+    parser.add_argument(
+        "--pr-limit",
+        type=int,
+        default=1000,
+        help=(
+            "Max merged PRs to fetch per repo in history mode, newest first "
+            "(default: 1000)"
+        ),
+    )
+    parser.add_argument(
+        "--overwrite",
+        action="store_true",
+        help=(
+            "In history mode, rewrite the CSV from scratch instead of only "
+            "appending commits not already recorded (the default)"
+        ),
+    )
     args = parser.parse_args(argv)
 
     args.workdir.mkdir(parents=True, exist_ok=True)
 
-    all_stats: list[RepoStats] = []
-    for repo in REPOS:
-        print(f"\n{repo.app} ({repo.platform})")
-        try:
-            repo_root = clone_or_update(repo, args.workdir, args.refresh)
-        except RuntimeError as exc:
-            print(f"  ERROR: {exc}", file=sys.stderr)
-            continue
-        stats = analyse_repo(repo, repo_root)
-        all_stats.append(stats)
-        print(f"  {stats.total_files:,} files, {stats.total_lines:,} lines")
-
-    if all_stats:
-        print_report(all_stats)
-        write_csv(all_stats, args.csv)
-        # Keep the React app's copy in sync so `npm run dev` shows fresh data.
-        web_public = Path("web/public/report.csv")
-        if web_public.parent.exists():
-            shutil.copyfile(args.csv, web_public)
-            print(f"CSV copied to {web_public}")
-    return 0
+    if args.history:
+        return run_history(args)
+    return run_snapshot(args)
 
 
 if __name__ == "__main__":
