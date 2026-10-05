@@ -110,6 +110,8 @@ export default function App() {
       const percentComplete = latest.baseline
         ? clampPercent(((latest.baseline - latest.toMigrate) / latest.baseline) * 100)
         : 0;
+      // Lines of the baseline that have been migrated away (not React added).
+      const migratedFromBaseline = Math.max(0, latest.baseline - latest.toMigrate);
       return {
         app: a.app,
         platform: a.platform,
@@ -117,6 +119,7 @@ export default function App() {
         baseline: latest.baseline,
         toMigrate: latest.toMigrate,
         migrated: latest.migrated,
+        migratedFromBaseline,
         total,
         percentComplete,
         series,
@@ -132,6 +135,7 @@ export default function App() {
     totals.percentComplete = totals.baseline
       ? clampPercent(((totals.baseline - totals.toMigrate) / totals.baseline) * 100)
       : 0;
+    totals.migratedFromBaseline = Math.max(0, totals.baseline - totals.toMigrate);
 
     const categoryTotals = TO_MIGRATE_CATEGORIES.map((category) => ({
       category,
@@ -208,7 +212,7 @@ export default function App() {
                 </td>
                 <td className="num">{formatNumber(a.baseline)}</td>
                 <td className="num">{formatNumber(a.toMigrate)}</td>
-                <td className="num">{formatNumber(a.migrated)}</td>
+                <td className="num">{formatNumber(a.migratedFromBaseline)}</td>
                 <td>
                   <ProgressBar percent={a.percentComplete} />
                 </td>
@@ -221,7 +225,7 @@ export default function App() {
               <td></td>
               <td className="num">{formatNumber(totals.baseline)}</td>
               <td className="num">{formatNumber(totals.toMigrate)}</td>
-              <td className="num">{formatNumber(totals.migrated)}</td>
+              <td className="num">{formatNumber(totals.migratedFromBaseline)}</td>
               <td>
                 <ProgressBar percent={totals.percentComplete} />
               </td>

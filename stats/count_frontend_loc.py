@@ -60,6 +60,13 @@ REPOS: list[Repo] = [
     Repo("Story Packages", "Knockout", "https://github.com/guardian/story-packages", baseline="ac79901243069b52ce625d0231fe979b7dffdba4", baseline_loc=7841),
 ]
 
+# Metric override: specific files to count as already migrated regardless of
+# type (e.g. a stylesheet that has been ported), keyed by app -> repo-relative
+# paths. This overrides classification only; the counting rules are unchanged.
+MIGRATED_FILE_OVERRIDES: dict[str, set[str]] = {
+    "Restorer": {"public/gu-noting.css"},
+}
+
 # --- What counts as "frontend" code -----------------------------------------
 
 # Frontend code is grouped into categories. TypeScript / TSX is treated as
@@ -171,12 +178,33 @@ def is_excluded(path: Path, repo_root: Path) -> bool:
     return any(part in EXCLUDED_DIRS for part in rel_parts)
 
 
+# Build / tooling config files (not application source) to exclude from counts.
+BUILD_CONFIG_PATTERNS: tuple[re.Pattern, ...] = tuple(
+    re.compile(p, re.IGNORECASE)
+    for p in (
+        r"\.config\.[mc]?[jt]s$",          # *.config.{js,ts,mjs,cjs,...}: webpack, vite, jest, rollup, babel, postcss, tailwind
+        r"^webpack\.[\w.-]+\.[mc]?js$",     # webpack.dev.js, webpack.prod.js
+        r"^rollup\.[\w.-]+\.[mc]?js$",
+        r"^(?:gulpfile|gruntfile)\.[jt]s$",
+        r"^karma\.conf\.[jt]s$",
+        r"^\.(?:babelrc|eslintrc|prettierrc|stylelintrc)(?:\.[mc]?js)?$",
+    )
+)
+
+
+def is_build_config(name: str) -> bool:
+    return any(p.search(name) for p in BUILD_CONFIG_PATTERNS)
+
+
 def is_frontend_file(path: Path) -> bool:
     if path.suffix.lower() not in FRONTEND_EXTENSIONS:
         return False
     # Skip minified / bundled files - they are generated, not source.
     name = path.name.lower()
     if ".min." in name or name.endswith("bundle.js"):
+        return False
+    # Skip build / tooling config - not application code.
+    if is_build_config(name):
         return False
     return True
 
@@ -364,6 +392,7 @@ def read_text(path: Path) -> str | None:
 def analyse_repo(repo: Repo, repo_root: Path) -> RepoStats:
     stats = RepoStats(repo=repo)
     candidates = relevant_frameworks(repo.platform)
+    overrides = MIGRATED_FILE_OVERRIDES.get(repo.app, set())
     for path in repo_root.rglob("*"):
         if not path.is_file():
             continue
@@ -375,12 +404,15 @@ def analyse_repo(repo: Repo, repo_root: Path) -> RepoStats:
         if text is None:
             continue
         ext = path.suffix.lower()
+        rel = path.relative_to(repo_root).as_posix()
+        overridden = rel in overrides
         # Code files count only when their imports show they use a framework we
-        # track; HTML/CSS are always counted.
-        if ext in CODE_EXTENSIONS and not detect_frameworks(text, candidates):
+        # track; HTML/CSS are always counted. Overridden files bypass this.
+        if ext in CODE_EXTENSIONS and not overridden and not detect_frameworks(text, candidates):
             continue
         lines = len(text.splitlines())
-        category = EXT_TO_CATEGORY[ext]
+        # Override: count listed files as already migrated regardless of type.
+        category = MIGRATED_CATEGORY if overridden else EXT_TO_CATEGORY[ext]
         stats.by_category[category] = stats.by_category.get(category, 0) + lines
         stats.total_lines += lines
         stats.total_files += 1
