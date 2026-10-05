@@ -320,13 +320,14 @@ export default function App() {
   }
 
   const { appList, totals, totalSeries } = model;
+  const topBarRepos = appList.map((a) => ({ name: a.app, percent: a.percentComplete }));
 
   const repoMatch = /^#\/repo\/(.+)$/.exec(hash);
   if (repoMatch?.[1]) {
     const name = decodeURIComponent(repoMatch[1]);
     return (
       <>
-        <AppTopBar />
+        <AppTopBar repos={topBarRepos} />
         <RepoDetail name={name} repo={appList.find((a) => a.app === name)} />
       </>
     );
@@ -334,7 +335,7 @@ export default function App() {
 
   return (
     <>
-      <AppTopBar />
+      <AppTopBar repos={topBarRepos} />
       <main className="container">
         <ProgressChart appList={appList} totalSeries={totalSeries} />
 
