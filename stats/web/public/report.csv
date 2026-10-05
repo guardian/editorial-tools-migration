@@ -1,0 +1,21 @@
+app,platform,category,status,lines
+Workflow,Angular,JavaScript,to_migrate,8637
+Workflow,Angular,HTML templates,to_migrate,2757
+Workflow,Angular,CSS,to_migrate,3655
+Workflow,Angular,Migrated (TS/TSX),migrated,706
+Grid,Angular,JavaScript,to_migrate,15825
+Grid,Angular,HTML templates,to_migrate,5444
+Grid,Angular,CSS,to_migrate,5657
+Grid,Angular,Migrated (TS/TSX),migrated,6690
+Restorer,Angular,JavaScript,to_migrate,1620
+Restorer,Angular,HTML templates,to_migrate,392
+Restorer,Angular,CSS,to_migrate,1894
+Restorer,Angular,Migrated (TS/TSX),migrated,0
+Fronts,Knockout,JavaScript,to_migrate,41503
+Fronts,Knockout,HTML templates,to_migrate,1898
+Fronts,Knockout,CSS,to_migrate,2868
+Fronts,Knockout,Migrated (TS/TSX),migrated,54018
+Story Packages,Knockout,JavaScript,to_migrate,14098
+Story Packages,Knockout,HTML templates,to_migrate,885
+Story Packages,Knockout,CSS,to_migrate,2349
+Story Packages,Knockout,Migrated (TS/TSX),migrated,0
