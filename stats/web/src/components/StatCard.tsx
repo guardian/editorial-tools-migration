@@ -1,14 +1,20 @@
 import { css } from '@emotion/react';
-import type { SerializedStyles } from '@emotion/react';
+import { Typography } from '@guardian/stand/Typography';
 
-// The dashboard's dark palette has no exact Stand token equivalent, so we keep
-// the legacy CSS custom properties (defined in index.css) as the source of truth.
+// The dashboard's palette has no exact Stand token equivalent, so we keep the
+// legacy CSS custom properties (defined in index.css) for the card chrome and
+// the accent/label colours.
 type StatCardAccent = 'good' | 'warn';
 
 type StatCardProps = {
   label: string;
   value: string;
   accent?: StatCardAccent;
+};
+
+const ACCENT_COLOR: Record<StatCardAccent, string> = {
+  good: 'var(--good)',
+  warn: 'var(--warn)',
 };
 
 const cardCss = css({
@@ -18,26 +24,25 @@ const cardCss = css({
   padding: '1.25rem',
 });
 
-const valueCss = css({
-  fontSize: '1.9rem',
-  fontWeight: 700,
-});
-
-const accentCss: Record<StatCardAccent, SerializedStyles> = {
-  good: css({ color: 'var(--good)' }),
-  warn: css({ color: 'var(--warn)' }),
-};
-
-const labelCss = css({
-  color: 'var(--muted)',
-  fontSize: '0.85rem',
-  marginTop: '0.25rem',
-});
+const labelSpacing = css({ marginTop: '0.25rem' });
 
 const StatCard: React.FunctionComponent<StatCardProps> = ({ label, value, accent }) => (
   <div css={cardCss}>
-    <div css={[valueCss, accent ? accentCss[accent] : undefined]}>{value}</div>
-    <div css={labelCss}>{label}</div>
+    <Typography
+      element="div"
+      variant="heading2Xl"
+      {...(accent ? { theme: { color: ACCENT_COLOR[accent] } } : {})}
+    >
+      {value}
+    </Typography>
+    <Typography
+      element="div"
+      variant="bodySm"
+      theme={{ color: 'var(--muted)' }}
+      cssOverrides={labelSpacing}
+    >
+      {label}
+    </Typography>
   </div>
 );
 
