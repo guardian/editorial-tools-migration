@@ -76,17 +76,21 @@ MIGRATED_FILE_OVERRIDES: dict[str, set[str]] = {
 # belong to a framework we track (see FRAMEWORK_PATTERNS), so unrelated tooling
 # and config scripts are not mistaken for app code.
 MIGRATED_CATEGORY = "Migrated (TS/TSX)"
+# Cucumber/Gherkin feature files are tracked as a separate "added" metric,
+# independent of the migration (neither to-migrate nor React migrated).
+CUCUMBER_CATEGORY = "Cucumber features"
 
 CATEGORIES: dict[str, set[str]] = {
     "JavaScript": {".js", ".jsx", ".mjs", ".cjs"},
     "HTML templates": {".html", ".htm"},
     "CSS": {".css", ".scss", ".sass", ".less"},
     MIGRATED_CATEGORY: {".ts", ".tsx", ".mts", ".cts"},
+    CUCUMBER_CATEGORY: {".feature"},
 }
 
 # Categories whose lines still need to be migrated to React.
 TO_MIGRATE_CATEGORIES: list[str] = [
-    name for name in CATEGORIES if name != MIGRATED_CATEGORY
+    name for name in CATEGORIES if name not in (MIGRATED_CATEGORY, CUCUMBER_CATEGORY)
 ]
 
 # Reverse lookup: file extension -> category name.
@@ -383,6 +387,10 @@ class RepoStats:
     def migrated(self) -> int:
         return self.by_category.get(MIGRATED_CATEGORY, 0)
 
+    @property
+    def cucumber(self) -> int:
+        return self.by_category.get(CUCUMBER_CATEGORY, 0)
+
 
 def read_text(path: Path) -> str | None:
     """Read a file as UTF-8 text, returning None if it can't be read."""
@@ -390,6 +398,16 @@ def read_text(path: Path) -> str | None:
         return path.read_text(encoding="utf-8", errors="ignore")
     except OSError:
         return None
+
+
+# Gherkin scenario keywords (Scenario, Scenario Outline / Template).
+SCENARIO_RE = re.compile(
+    r"^\s*(?:Scenario Outline|Scenario Template|Scenario)\s*:", re.MULTILINE
+)
+
+
+def count_scenarios(text: str) -> int:
+    return len(SCENARIO_RE.findall(text))
 
 
 def analyse_repo(repo: Repo, repo_root: Path) -> RepoStats:
@@ -413,11 +431,12 @@ def analyse_repo(repo: Repo, repo_root: Path) -> RepoStats:
         # track; HTML/CSS are always counted. Overridden files bypass this.
         if ext in CODE_EXTENSIONS and not overridden and not detect_frameworks(text, candidates):
             continue
-        lines = len(text.splitlines())
         # Override: count listed files as already migrated regardless of type.
         category = MIGRATED_CATEGORY if overridden else EXT_TO_CATEGORY[ext]
-        stats.by_category[category] = stats.by_category.get(category, 0) + lines
-        stats.total_lines += lines
+        # Feature files are measured by scenario count, everything else by lines.
+        count = count_scenarios(text) if category == CUCUMBER_CATEGORY else len(text.splitlines())
+        stats.by_category[category] = stats.by_category.get(category, 0) + count
+        stats.total_lines += count
         stats.total_files += 1
     return stats
 
@@ -435,6 +454,14 @@ def _fmt_pct(pct: float | None) -> str:
     return f"{pct:.1f}%" if pct is not None else "-"
 
 
+def category_status(category: str) -> str:
+    if category == MIGRATED_CATEGORY:
+        return "migrated"
+    if category == CUCUMBER_CATEGORY:
+        return "added"
+    return "to_migrate"
+
+
 def print_report(all_stats: list[RepoStats]) -> None:
     # --- Per-application summary (one row per app) ---------------------------
     print("\n" + "=" * 78)
@@ -443,7 +470,8 @@ def print_report(all_stats: list[RepoStats]) -> None:
 
     summary_header = (
         f"{'App':<16} {'Platform':<10} {'Files':>8} "
-        f"{'Baseline':>12} {'To migrate':>12} {'Migrated':>12} {'Complete':>9}"
+        f"{'Baseline':>12} {'To migrate':>12} {'Migrated':>12} "
+        f"{'Scenarios':>10} {'Complete':>9}"
     )
     print(summary_header)
     print("-" * len(summary_header))
@@ -452,25 +480,27 @@ def print_report(all_stats: list[RepoStats]) -> None:
     grand_baseline = 0
     grand_to_migrate = 0
     grand_migrated = 0
+    grand_cucumber = 0
     for stats in all_stats:
         baseline = stats.repo.baseline_loc or 0
         pct = percent_complete(stats.repo.baseline_loc, stats.to_migrate)
         print(
             f"{stats.repo.app:<16} {stats.repo.platform:<10} "
             f"{stats.total_files:>8,} {baseline:>12,} {stats.to_migrate:>12,} "
-            f"{stats.migrated:>12,} {_fmt_pct(pct):>9}"
+            f"{stats.migrated:>12,} {stats.cucumber:>10,} {_fmt_pct(pct):>9}"
         )
         grand_files += stats.total_files
         grand_baseline += baseline
         grand_to_migrate += stats.to_migrate
         grand_migrated += stats.migrated
+        grand_cucumber += stats.cucumber
 
     print("-" * len(summary_header))
     grand_pct = percent_complete(grand_baseline, grand_to_migrate)
     print(
         f"{'TOTAL':<16} {'':<10} {grand_files:>8,} "
         f"{grand_baseline:>12,} {grand_to_migrate:>12,} {grand_migrated:>12,} "
-        f"{_fmt_pct(grand_pct):>9}"
+        f"{grand_cucumber:>10,} {_fmt_pct(grand_pct):>9}"
     )
 
     # --- Detailed per-application category breakdown ------------------------
@@ -539,7 +569,7 @@ def stats_to_rows(stats: RepoStats, commit: str, timestamp: str) -> list[dict]:
     rows: list[dict] = []
     for category in CATEGORIES:
         lines = stats.by_category.get(category, 0)
-        status = "migrated" if category == MIGRATED_CATEGORY else "to_migrate"
+        status = category_status(category)
         rows.append(
             {
                 "app": stats.repo.app,
