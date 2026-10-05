@@ -153,6 +153,23 @@ tfoot td {
   transition: width 0.4s ease;
 }
 
+.coverage-fill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  border-radius: 999px;
+  transition: width 0.4s ease;
+}
+
+.coverage-fill.scenarios {
+  background: rgba(56, 189, 248, 0.35);
+}
+
+.coverage-fill.implemented {
+  background: linear-gradient(90deg, #16a34a, var(--good));
+}
+
 .progress-label {
   position: absolute;
   inset: 0;

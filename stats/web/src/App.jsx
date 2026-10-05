@@ -145,6 +145,23 @@ export default function App() {
       : 0;
     totals.migratedFromBaseline = Math.max(0, totals.baseline - totals.toMigrate);
 
+    // Benchmark scenarios-per-line from the completed Restorer migration, then
+    // estimate each app's potential scenario count from its baseline LOC.
+    const restorer = appList.find((a) => a.app === 'Restorer');
+    const scenarioRatio = restorer && restorer.baseline ? restorer.cucumber / restorer.baseline : 0;
+    for (const a of appList) {
+      a.potentialScenarios = Math.round(scenarioRatio * a.baseline);
+      a.scenariosPct = a.potentialScenarios ? clampPercent((a.cucumber / a.potentialScenarios) * 100) : 0;
+      a.implementedPct = a.potentialScenarios ? clampPercent((a.implemented / a.potentialScenarios) * 100) : 0;
+    }
+    totals.potentialScenarios = appList.reduce((s, a) => s + a.potentialScenarios, 0);
+    totals.scenariosPct = totals.potentialScenarios
+      ? clampPercent((totals.cucumber / totals.potentialScenarios) * 100)
+      : 0;
+    totals.implementedPct = totals.potentialScenarios
+      ? clampPercent((totals.implemented / totals.potentialScenarios) * 100)
+      : 0;
+
     const categoryTotals = TO_MIGRATE_CATEGORIES.map((category) => ({
       category,
       lines: appList.reduce((s, a) => s + (a.categories[category] || 0), 0),
@@ -250,6 +267,8 @@ export default function App() {
               <th>Platform</th>
               <th className="num">Scenarios</th>
               <th className="num">Implemented</th>
+              <th className="num">Potential</th>
+              <th>Coverage</th>
             </tr>
           </thead>
           <tbody>
@@ -261,6 +280,13 @@ export default function App() {
                 </td>
                 <td className="num">{formatNumber(a.cucumber)}</td>
                 <td className="num">{formatNumber(a.implemented)}</td>
+                <td className="num">{formatNumber(a.potentialScenarios)}</td>
+                <td>
+                  <CoverageBar
+                    scenariosPercent={a.scenariosPct}
+                    implementedPercent={a.implementedPct}
+                  />
+                </td>
               </tr>
             ))}
           </tbody>
@@ -270,6 +296,13 @@ export default function App() {
               <td></td>
               <td className="num">{formatNumber(totals.cucumber)}</td>
               <td className="num">{formatNumber(totals.implemented)}</td>
+              <td className="num">{formatNumber(totals.potentialScenarios)}</td>
+              <td>
+                <CoverageBar
+                  scenariosPercent={totals.scenariosPct}
+                  implementedPercent={totals.implementedPct}
+                />
+              </td>
             </tr>
           </tfoot>
         </table>
@@ -333,6 +366,20 @@ function ProgressBar({ percent }) {
     <div className="progress" title={`${percent.toFixed(1)}% migrated`}>
       <div className="progress-fill" style={{ width: `${percent}%` }} />
       <span className="progress-label">{percent.toFixed(0)}%</span>
+    </div>
+  );
+}
+
+// Nested bar against potential scenarios: written (outer) with implemented (inner).
+function CoverageBar({ scenariosPercent, implementedPercent }) {
+  return (
+    <div
+      className="progress"
+      title={`${scenariosPercent.toFixed(1)}% of potential scenarios written, ${implementedPercent.toFixed(1)}% implemented`}
+    >
+      <div className="coverage-fill scenarios" style={{ width: `${scenariosPercent}%` }} />
+      <div className="coverage-fill implemented" style={{ width: `${implementedPercent}%` }} />
+      <span className="progress-label">{scenariosPercent.toFixed(0)}%</span>
     </div>
   );
 }
