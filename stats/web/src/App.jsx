@@ -193,13 +193,8 @@ export default function App() {
 
       <section className="cards">
         <StatCard label="Lines to migrate" value={formatNumber(totals.toMigrate)} accent="warn" />
-        <StatCard label="Lines migrated (React)" value={formatNumber(totals.migrated)} accent="good" />
         <StatCard label="Baseline" value={formatNumber(totals.baseline)} />
         <StatCard label="Complete" value={`${totals.percentComplete.toFixed(1)}%`} accent="good" />
-        <StatCard
-          label="Scenarios implemented"
-          value={`${formatNumber(totals.implemented)} / ${formatNumber(totals.cucumber)}`}
-        />
       </section>
 
       <section>
@@ -212,9 +207,9 @@ export default function App() {
               <th className="num">Baseline</th>
               <th className="num">To migrate</th>
               <th className="num">Migrated</th>
+              <th>Progress</th>
               <th className="num">Scenarios</th>
               <th className="num">Implemented</th>
-              <th>Progress</th>
             </tr>
           </thead>
           <tbody>
@@ -227,11 +222,11 @@ export default function App() {
                 <td className="num">{formatNumber(a.baseline)}</td>
                 <td className="num">{formatNumber(a.toMigrate)}</td>
                 <td className="num">{formatNumber(a.migratedFromBaseline)}</td>
-                <td className="num">{formatNumber(a.cucumber)}</td>
-                <td className="num">{formatNumber(a.implemented)}</td>
                 <td>
                   <ProgressBar percent={a.percentComplete} />
                 </td>
+                <td className="num">{formatNumber(a.cucumber)}</td>
+                <td className="num">{formatNumber(a.implemented)}</td>
               </tr>
             ))}
           </tbody>
@@ -242,11 +237,11 @@ export default function App() {
               <td className="num">{formatNumber(totals.baseline)}</td>
               <td className="num">{formatNumber(totals.toMigrate)}</td>
               <td className="num">{formatNumber(totals.migratedFromBaseline)}</td>
-              <td className="num">{formatNumber(totals.cucumber)}</td>
-              <td className="num">{formatNumber(totals.implemented)}</td>
               <td>
                 <ProgressBar percent={totals.percentComplete} />
               </td>
+              <td className="num">{formatNumber(totals.cucumber)}</td>
+              <td className="num">{formatNumber(totals.implemented)}</td>
             </tr>
           </tfoot>
         </table>
