@@ -1,8 +1,12 @@
 import { useMemo, useState } from 'react';
 import Highcharts from 'highcharts';
 import HighchartsReact from 'highcharts-react-official';
+import { Typography } from '@guardian/stand/Typography';
 
-function formatDate(ms) {
+// Typography defaults to black text; on the dark dashboard we inherit the body colour.
+const inheritColor = { color: 'inherit' } as const;
+
+function formatDate(ms: number): string {
   return new Date(ms).toLocaleDateString('en-GB', {
     day: 'numeric',
     month: 'short',
@@ -11,7 +15,7 @@ function formatDate(ms) {
 }
 
 /** Return the timestamp `workDays` working days (Mon–Fri) after startMs. */
-function addWorkingDays(startMs, workDays) {
+function addWorkingDays(startMs: number, workDays: number): number {
   const d = new Date(startMs);
   let added = 0;
   while (added < workDays) {
@@ -26,11 +30,15 @@ function addWorkingDays(startMs, workDays) {
 const WINDOW_MONTHS = 18;
 const WINDOW_WORKING_DAYS = Math.round((WINDOW_MONTHS / 12) * 261); // ~261 working days/year
 
-function addMonths(startMs, months) {
+function addMonths(startMs: number, months: number): number {
   const d = new Date(startMs);
   d.setMonth(d.getMonth() + months);
   return d.getTime();
 }
+
+type BurndownChartProps = {
+  totalToMigrate: number;
+};
 
 /**
  * Burndown chart: projects when the remaining "lines to migrate" reach zero
@@ -39,14 +47,18 @@ function addMonths(startMs, months) {
  * The time axis is fixed to an 18-month window; the velocity slider changes
  * how far the projection line burns down within that window.
  */
-export default function BurndownChart({ totalToMigrate }) {
+export default function BurndownChart({ totalToMigrate }: BurndownChartProps) {
   const [velocity, setVelocity] = useState(500);
 
   const startMs = useMemo(() => Date.now(), []);
   const windowEndMs = useMemo(() => addMonths(startMs, WINDOW_MONTHS), [startMs]);
   const deadlineMs = useMemo(() => addMonths(startMs, 17), [startMs]);
 
-  const { series, completionMs, workDays } = useMemo(() => {
+  const { series, completionMs, workDays } = useMemo<{
+    series: Array<[number, number]>;
+    completionMs: number | null;
+    workDays: number;
+  }>(() => {
     if (velocity <= 0) {
       return { series: [[startMs, totalToMigrate]], completionMs: null, workDays: Infinity };
     }
@@ -55,7 +67,7 @@ export default function BurndownChart({ totalToMigrate }) {
     // Only plot as far as the visible window; sample ~60 points across it.
     const lastDay = Math.min(days, WINDOW_WORKING_DAYS);
     const step = Math.max(1, Math.ceil(lastDay / 60));
-    const points = [];
+    const points: Array<[number, number]> = [];
     for (let day = 0; day <= lastDay; day += step) {
       const remaining = Math.max(0, totalToMigrate - velocity * day);
       points.push([addWorkingDays(startMs, day), remaining]);
@@ -63,7 +75,7 @@ export default function BurndownChart({ totalToMigrate }) {
     // If the migration completes inside the window, land exactly on zero.
     if (days <= WINDOW_WORKING_DAYS) {
       const last = points[points.length - 1];
-      if (last[1] !== 0) {
+      if (last && last[1] !== 0) {
         points.push([addWorkingDays(startMs, days), 0]);
       }
     } else {
@@ -75,8 +87,7 @@ export default function BurndownChart({ totalToMigrate }) {
     return { series: points, completionMs: addWorkingDays(startMs, days), workDays: days };
   }, [velocity, totalToMigrate, startMs, windowEndMs]);
 
-
-  const options = useMemo(
+  const options = useMemo<Highcharts.Options>(
     () => ({
       chart: {
         type: 'area',
@@ -84,7 +95,7 @@ export default function BurndownChart({ totalToMigrate }) {
         height: 420,
         style: { fontFamily: 'inherit' },
       },
-      title: { text: null },
+      title: { text: '' },
       credits: { enabled: false },
       legend: { enabled: false },
       xAxis: {
@@ -119,7 +130,7 @@ export default function BurndownChart({ totalToMigrate }) {
         labels: {
           style: { color: '#94a3b8' },
           formatter() {
-            return this.value.toLocaleString('en-GB');
+            return Number(this.value).toLocaleString('en-GB');
           },
         },
       },
@@ -129,7 +140,7 @@ export default function BurndownChart({ totalToMigrate }) {
         style: { color: '#e2e8f0' },
         headerFormat: '',
         pointFormatter() {
-          return `<b>${formatDate(this.x)}</b><br/>${this.y.toLocaleString(
+          return `<b>${formatDate(Number(this.x))}</b><br/>${(this.y ?? 0).toLocaleString(
             'en-GB'
           )} lines remaining`;
         },
@@ -148,15 +159,18 @@ export default function BurndownChart({ totalToMigrate }) {
           },
         },
       },
-      series: [{ name: 'Lines remaining', data: series }],
+      series: [{ type: 'area', name: 'Lines remaining', data: series }],
     }),
     [series, startMs, windowEndMs, deadlineMs]
   );
 
   return (
     <section>
-      <h2>Migration burndown projection</h2>
+      <Typography element="h2" variant="headingMd" theme={inheritColor}>
+        Migration burndown projection
+      </Typography>
 
+      {/* No Stand slider component exists, so the velocity control stays a raw range input. */}
       <div className="velocity-control">
         <label htmlFor="velocity">
           Developer velocity: <strong>{velocity.toLocaleString('en-GB')}</strong> lines / day
@@ -178,21 +192,21 @@ export default function BurndownChart({ totalToMigrate }) {
 
       <div className="projection-summary">
         {velocity <= 0 ? (
-          <p className="warn-text">
+          <Typography element="p" variant="bodyMd" className="warn-text">
             At 0 lines/day the migration never completes — increase the velocity.
-          </p>
+          </Typography>
         ) : (
-          <p>
+          <Typography element="p" variant="bodyMd" theme={inheritColor}>
             At <strong>{velocity.toLocaleString('en-GB')}</strong> lines/day over a 5-day
             working week, the <strong>{totalToMigrate.toLocaleString('en-GB')}</strong> remaining
             lines take <strong>{workDays.toLocaleString('en-GB')}</strong> working days (
             {(workDays / 5).toFixed(1)} weeks) — projected completion{' '}
-            <strong>{formatDate(completionMs)}</strong>
-            {completionMs > windowEndMs && (
+            <strong>{completionMs != null ? formatDate(completionMs) : '—'}</strong>
+            {completionMs != null && completionMs > windowEndMs && (
               <span className="warn-text"> (beyond the 18-month window)</span>
             )}
             .
-          </p>
+          </Typography>
         )}
       </div>
 

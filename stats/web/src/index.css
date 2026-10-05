@@ -50,32 +50,6 @@ h2 {
   margin-bottom: 1rem;
 }
 
-.card {
-  background: var(--panel);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 1.25rem;
-}
-
-.card-value {
-  font-size: 1.9rem;
-  font-weight: 700;
-}
-
-.card-label {
-  color: var(--muted);
-  font-size: 0.85rem;
-  margin-top: 0.25rem;
-}
-
-.card.good .card-value {
-  color: var(--good);
-}
-
-.card.warn .card-value {
-  color: var(--warn);
-}
-
 table {
   width: 100%;
   border-collapse: collapse;
@@ -117,74 +91,6 @@ tfoot td {
 
 .migrated-cell {
   color: var(--good);
-}
-
-.badge {
-  display: inline-block;
-  padding: 0.15rem 0.55rem;
-  border-radius: 999px;
-  font-size: 0.75rem;
-  font-weight: 600;
-  border: 1px solid var(--border);
-}
-
-.badge.angular {
-  background: rgba(221, 0, 49, 0.15);
-  color: #ff7a8a;
-}
-
-.badge.knockout {
-  background: rgba(56, 189, 248, 0.15);
-  color: var(--accent);
-}
-
-.progress {
-  position: relative;
-  height: 20px;
-  min-width: 120px;
-  background: var(--panel-2);
-  border-radius: 999px;
-  overflow: hidden;
-}
-
-.progress-fill {
-  height: 100%;
-  background: linear-gradient(90deg, #16a34a, var(--good));
-  transition: width 0.4s ease;
-}
-
-.coverage-fill {
-  position: absolute;
-  top: 0;
-  left: 0;
-  height: 100%;
-  border-radius: 999px;
-  transition: width 0.4s ease;
-}
-
-.coverage-fill.scenarios {
-  background: rgba(56, 189, 248, 0.35);
-}
-
-.coverage-fill.implemented {
-  background: linear-gradient(90deg, #16a34a, var(--good));
-}
-
-.progress-label {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.72rem;
-  font-weight: 600;
-}
-
-.error {
-  background: rgba(245, 158, 11, 0.12);
-  border: 1px solid var(--warn);
-  border-radius: 12px;
-  padding: 1rem 1.25rem;
 }
 
 code {
@@ -236,46 +142,13 @@ code {
 .range-presets {
   display: flex;
   gap: 0.25rem;
-}
-
-.range-btn {
-  background: var(--panel);
-  border: 1px solid var(--border);
-  color: var(--muted);
-  padding: 0.3rem 0.7rem;
-  border-radius: 999px;
-  cursor: pointer;
-  font: inherit;
-  font-size: 0.8rem;
-}
-
-.range-btn:hover {
-  color: var(--text);
-}
-
-.range-btn.active {
-  background: var(--accent);
-  border-color: var(--accent);
-  color: #0b1120;
-  font-weight: 600;
+  align-items: flex-end;
 }
 
 .range-custom {
   display: flex;
   gap: 0.75rem;
-  color: var(--muted);
-  font-size: 0.8rem;
-}
-
-.range-custom input[type='date'] {
-  background: var(--panel);
-  border: 1px solid var(--border);
-  color: var(--text);
-  border-radius: 6px;
-  padding: 0.25rem 0.4rem;
-  font: inherit;
-  font-size: 0.8rem;
-  color-scheme: dark;
+  align-items: flex-end;
 }
 
 .projection-summary {

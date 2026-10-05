@@ -1,36 +1,99 @@
 import { useEffect, useMemo, useState } from 'react';
-import BurndownChart from './BurndownChart.jsx';
-import ProgressChart from './ProgressChart.jsx';
+import { Typography } from '@guardian/stand/Typography';
+import { AlertBanner } from '@guardian/stand/AlertBanner';
+import BurndownChart from './BurndownChart.tsx';
+import ProgressChart from './ProgressChart.tsx';
+import { StatCard } from './components/StatCard.tsx';
+import { ProgressBar } from './components/ProgressBar.tsx';
+import { CoverageBar } from './components/CoverageBar.tsx';
+import { PlatformBadge } from './components/PlatformBadge.tsx';
 
 const MIGRATED_CATEGORY = 'Migrated (TS/TSX)';
 const TO_MIGRATE_CATEGORIES = ['JavaScript', 'HTML templates', 'CSS'];
 
+// Typography defaults to black text; on the dark dashboard we inherit the body colour.
+const inheritColor = { color: 'inherit' } as const;
+const mutedColor = { color: 'var(--muted)' } as const;
+
+type CsvRow = Record<string, string | undefined>;
+
+type SamplePoint = {
+  t: number;
+  toMigrate: number;
+  percentComplete: number;
+};
+
+type AppStats = {
+  app: string;
+  platform: string;
+  categories: Record<string, number>;
+  baseline: number;
+  toMigrate: number;
+  migrated: number;
+  migratedFromBaseline: number;
+  cucumber: number;
+  implemented: number;
+  total: number;
+  percentComplete: number;
+  series: SamplePoint[];
+  potentialScenarios: number;
+  scenariosPct: number;
+  implementedPct: number;
+};
+
+type Totals = {
+  baseline: number;
+  toMigrate: number;
+  migrated: number;
+  migratedFromBaseline: number;
+  cucumber: number;
+  implemented: number;
+  total: number;
+  percentComplete: number;
+  potentialScenarios: number;
+  scenariosPct: number;
+  implementedPct: number;
+};
+
+type CategoryTotal = { category: string; lines: number };
+
+type Model = {
+  appList: AppStats[];
+  totals: Totals;
+  categoryTotals: CategoryTotal[];
+  totalSeries: Array<[number, number]>;
+};
+
 /** Minimal CSV parser for simple, unquoted comma-separated values. */
-function parseCsv(text) {
+function parseCsv(text: string): CsvRow[] {
   const lines = text.trim().split(/\r?\n/);
-  const headers = lines[0].split(',');
+  const headerLine = lines[0];
+  if (!headerLine) return [];
+  const headers = headerLine.split(',');
   return lines.slice(1).map((line) => {
     const cells = line.split(',');
-    return headers.reduce((row, header, i) => {
+    return headers.reduce<CsvRow>((row, header, i) => {
       row[header] = cells[i];
       return row;
     }, {});
   });
 }
 
-function formatNumber(n) {
+function formatNumber(n: number): string {
   return n.toLocaleString('en-GB');
 }
 
-function clampPercent(n) {
+function clampPercent(n: number): number {
   return Math.max(0, Math.min(100, n));
 }
+
+type SeriesHolder = { baseline: number; series: SamplePoint[] };
 
 /**
  * Combined progress line: at each timestamp across all apps, carry forward each
  * app's last known to-migrate count and compute (baseline - current) / baseline.
  */
-function buildTotalSeries(appList) {
+function buildTotalSeries(appList: SeriesHolder[]): Array<[number, number]> {
   const withData = appList.filter((a) => a.baseline > 0 && a.series.length);
   const sumBaseline = withData.reduce((s, a) => s + a.baseline, 0);
   if (!sumBaseline) return [];
@@ -52,8 +115,8 @@ function buildTotalSeries(appList) {
 }
 
 export default function App() {
-  const [rows, setRows] = useState(null);
-  const [error, setError] = useState(null);
+  const [rows, setRows] = useState<CsvRow[] | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     fetch('/report.csv')
@@ -62,25 +125,39 @@ export default function App() {
         return res.text();
       })
       .then((text) => setRows(parseCsv(text)))
-      .catch((err) => setError(err.message));
+      .catch((err: unknown) => setError(err instanceof Error ? err.message : String(err)));
   }, []);
 
-  const model = useMemo(() => {
+  const model = useMemo<Model | null>(() => {
     if (!rows) return null;
 
     // The CSV may hold a full per-PR history (many commits per app). Group rows
     // into one sample per (app, commit); tables use the latest sample, the chart
     // uses the whole time series.
-    const apps = new Map();
+    type Sample = {
+      t: number | null;
+      baseline: number;
+      toMigrate: number;
+      migrated: number;
+      cucumber: number;
+      implemented: number;
+      categories: Record<string, number>;
+    };
+    type AppEntry = { app: string; platform: string; samples: Map<string, Sample> };
+
+    const apps = new Map<string, AppEntry>();
     for (const row of rows) {
+      const appName = row.app ?? '';
       const lines = Number(row.lines) || 0;
-      if (!apps.has(row.app)) {
-        apps.set(row.app, { app: row.app, platform: row.platform, samples: new Map() });
+      let appEntry = apps.get(appName);
+      if (!appEntry) {
+        appEntry = { app: appName, platform: row.platform ?? '', samples: new Map() };
+        apps.set(appName, appEntry);
       }
-      const appEntry = apps.get(row.app);
       const key = row.commit || row.timestamp || '';
-      if (!appEntry.samples.has(key)) {
-        appEntry.samples.set(key, {
+      let s = appEntry.samples.get(key);
+      if (!s) {
+        s = {
           t: row.timestamp ? Date.parse(row.timestamp) : null,
           baseline: Number(row.baseline) || 0,
           toMigrate: 0,
@@ -88,10 +165,10 @@ export default function App() {
           cucumber: 0,
           implemented: 0,
           categories: {},
-        });
+        };
+        appEntry.samples.set(key, s);
       }
-      const s = appEntry.samples.get(key);
-      s.categories[row.category] = lines;
+      if (row.category) s.categories[row.category] = lines;
       if (row.status === 'migrated') s.migrated += lines;
       else if (row.status === 'added') s.cucumber += lines;
       else if (row.status === 'implemented') s.implemented += lines;
@@ -100,44 +177,59 @@ export default function App() {
 
     // Progress is measured by how much of the baseline Angular/Knockout code has
     // been removed (baseline - current), not from React added.
-    const appList = [...apps.values()].map((a) => {
+    const appList: AppStats[] = [...apps.values()].map((a) => {
       const samples = [...a.samples.values()].sort((x, y) => (x.t || 0) - (y.t || 0));
       const latest = samples[samples.length - 1];
-      const series = samples
-        .filter((s) => s.t != null && s.baseline > 0)
+      const baseline = latest?.baseline ?? 0;
+      const toMigrate = latest?.toMigrate ?? 0;
+      const migrated = latest?.migrated ?? 0;
+      const cucumber = latest?.cucumber ?? 0;
+      const implemented = latest?.implemented ?? 0;
+      const categories = latest?.categories ?? {};
+      const series: SamplePoint[] = samples
+        .filter((s): s is Sample & { t: number } => s.t != null && s.baseline > 0)
         .map((s) => ({
           t: s.t,
           toMigrate: s.toMigrate,
           percentComplete: clampPercent(((s.baseline - s.toMigrate) / s.baseline) * 100),
         }));
-      const total = latest.toMigrate + latest.migrated;
-      const percentComplete = latest.baseline
-        ? clampPercent(((latest.baseline - latest.toMigrate) / latest.baseline) * 100)
+      const total = toMigrate + migrated;
+      const percentComplete = baseline
+        ? clampPercent(((baseline - toMigrate) / baseline) * 100)
         : 0;
       // Lines of the baseline that have been migrated away (not React added).
-      const migratedFromBaseline = Math.max(0, latest.baseline - latest.toMigrate);
+      const migratedFromBaseline = Math.max(0, baseline - toMigrate);
       return {
         app: a.app,
         platform: a.platform,
-        categories: latest.categories,
-        baseline: latest.baseline,
-        toMigrate: latest.toMigrate,
-        migrated: latest.migrated,
+        categories,
+        baseline,
+        toMigrate,
+        migrated,
         migratedFromBaseline,
-        cucumber: latest.cucumber,
-        implemented: latest.implemented,
+        cucumber,
+        implemented,
         total,
         percentComplete,
         series,
+        potentialScenarios: 0,
+        scenariosPct: 0,
+        implementedPct: 0,
       };
     });
 
-    const totals = {
+    const totals: Totals = {
       baseline: appList.reduce((s, a) => s + a.baseline, 0),
       toMigrate: appList.reduce((s, a) => s + a.toMigrate, 0),
       migrated: appList.reduce((s, a) => s + a.migrated, 0),
       cucumber: appList.reduce((s, a) => s + a.cucumber, 0),
       implemented: appList.reduce((s, a) => s + a.implemented, 0),
+      total: 0,
+      percentComplete: 0,
+      migratedFromBaseline: 0,
+      potentialScenarios: 0,
+      scenariosPct: 0,
+      implementedPct: 0,
     };
     totals.total = totals.toMigrate + totals.migrated;
     totals.percentComplete = totals.baseline
@@ -162,7 +254,7 @@ export default function App() {
       ? clampPercent((totals.implemented / totals.potentialScenarios) * 100)
       : 0;
 
-    const categoryTotals = TO_MIGRATE_CATEGORIES.map((category) => ({
+    const categoryTotals: CategoryTotal[] = TO_MIGRATE_CATEGORIES.map((category) => ({
       category,
       lines: appList.reduce((s, a) => s + (a.categories[category] || 0), 0),
     }));
@@ -175,15 +267,17 @@ export default function App() {
   if (error) {
     return (
       <main className="container">
-        <h1>Ed Tools Modernisation Stats</h1>
-        <div className="error">
-          <p>{error}</p>
-          <p>
-            Generate the data first from the project root:
-            <br />
-            <code>python3 count_frontend_loc.py</code>
-          </p>
-        </div>
+        <Typography element="h1" variant="headingLg" theme={inheritColor}>
+          Ed Tools Modernisation Stats
+        </Typography>
+        <AlertBanner level="error">
+          <Typography element="p" variant="bodyMd">
+            {error}
+          </Typography>
+          <Typography element="p" variant="bodyMd">
+            Generate the data first from the project root: <code>python3 count_frontend_loc.py</code>
+          </Typography>
+        </AlertBanner>
       </main>
     );
   }
@@ -191,8 +285,12 @@ export default function App() {
   if (!model) {
     return (
       <main className="container">
-        <h1>Ed Tools Modernisation Stats</h1>
-        <p>Loading…</p>
+        <Typography element="h1" variant="headingLg" theme={inheritColor}>
+          Ed Tools Modernisation Stats
+        </Typography>
+        <Typography element="p" variant="bodyMd" theme={inheritColor}>
+          Loading…
+        </Typography>
       </main>
     );
   }
@@ -202,10 +300,12 @@ export default function App() {
   return (
     <main className="container">
       <header>
-        <h1>Ed Tools Modernisation Stats</h1>
-        <p className="subtitle">
+        <Typography element="h1" variant="headingLg" theme={inheritColor}>
+          Ed Tools Modernisation Stats
+        </Typography>
+        <Typography element="p" variant="bodyMd" theme={mutedColor} className="subtitle">
           Frontend lines of code to migrate from Angular / Knockout to React.
-        </p>
+        </Typography>
       </header>
 
       <section className="cards">
@@ -215,7 +315,9 @@ export default function App() {
       </section>
 
       <section>
-        <h2>Migration summary by application</h2>
+        <Typography element="h2" variant="headingMd" theme={inheritColor}>
+          Migration summary by application
+        </Typography>
         <table>
           <thead>
             <tr>
@@ -232,7 +334,7 @@ export default function App() {
               <tr key={a.app}>
                 <td>{a.app}</td>
                 <td>
-                  <span className={`badge ${a.platform.toLowerCase()}`}>{a.platform}</span>
+                  <PlatformBadge platform={a.platform} />
                 </td>
                 <td className="num">{formatNumber(a.baseline)}</td>
                 <td className="num">{formatNumber(a.toMigrate)}</td>
@@ -259,7 +361,9 @@ export default function App() {
       </section>
 
       <section>
-        <h2>Testing summary by application</h2>
+        <Typography element="h2" variant="headingMd" theme={inheritColor}>
+          Testing summary by application
+        </Typography>
         <table>
           <thead>
             <tr>
@@ -276,7 +380,7 @@ export default function App() {
               <tr key={a.app}>
                 <td>{a.app}</td>
                 <td>
-                  <span className={`badge ${a.platform.toLowerCase()}`}>{a.platform}</span>
+                  <PlatformBadge platform={a.platform} />
                 </td>
                 <td className="num">{formatNumber(a.cucumber)}</td>
                 <td className="num">{formatNumber(a.implemented)}</td>
@@ -309,7 +413,9 @@ export default function App() {
       </section>
 
       <section>
-        <h2>Breakdown by category</h2>
+        <Typography element="h2" variant="headingMd" theme={inheritColor}>
+          Breakdown by category
+        </Typography>
         <table>
           <thead>
             <tr>
@@ -352,34 +458,4 @@ export default function App() {
   );
 }
 
-function StatCard({ label, value, accent }) {
-  return (
-    <div className={`card ${accent || ''}`}>
-      <div className="card-value">{value}</div>
-      <div className="card-label">{label}</div>
-    </div>
-  );
-}
-
-function ProgressBar({ percent }) {
-  return (
-    <div className="progress" title={`${percent.toFixed(1)}% migrated`}>
-      <div className="progress-fill" style={{ width: `${percent}%` }} />
-      <span className="progress-label">{percent.toFixed(0)}%</span>
-    </div>
-  );
-}
-
-// Nested bar against potential scenarios: written (outer) with implemented (inner).
-function CoverageBar({ scenariosPercent, implementedPercent }) {
-  return (
-    <div
-      className="progress"
-      title={`${scenariosPercent.toFixed(1)}% of potential scenarios written, ${implementedPercent.toFixed(1)}% implemented`}
-    >
-      <div className="coverage-fill scenarios" style={{ width: `${scenariosPercent}%` }} />
-      <div className="coverage-fill implemented" style={{ width: `${implementedPercent}%` }} />
-      <span className="progress-label">{scenariosPercent.toFixed(0)}%</span>
-    </div>
-  );
-}
+export type { AppStats };

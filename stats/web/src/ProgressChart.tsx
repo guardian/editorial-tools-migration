@@ -1,50 +1,69 @@
 import { useMemo, useState } from 'react';
 import Highcharts from 'highcharts';
 import HighchartsReact from 'highcharts-react-official';
+import { Button } from '@guardian/stand/Button';
+import { DatePicker } from '@guardian/stand/DatePicker';
+import { Typography } from '@guardian/stand/Typography';
+import { CalendarDate, getLocalTimeZone, type DateValue } from '@internationalized/date';
+import type { AppStats } from './App.tsx';
 
 const APP_COLORS = ['#38bdf8', '#a78bfa', '#f472b6', '#fbbf24', '#34d399'];
 
-const RANGE_PRESETS = [
+type PresetKey = '1m' | '3m' | '6m' | 'all' | 'custom';
+
+const RANGE_PRESETS: Array<{ key: PresetKey; label: string; months: number | null }> = [
     { key: '1m', label: '1M', months: 1 },
     { key: '3m', label: '3M', months: 3 },
     { key: '6m', label: '6M', months: 6 },
     { key: 'all', label: 'All', months: null },
 ];
 
-const DEFAULT_PRESET = '1m';
+const DEFAULT_PRESET: PresetKey = '1m';
 
-function subMonths(ms, months) {
+// Typography defaults to black text; on the dark dashboard we inherit the body colour.
+const mutedColor = { color: 'var(--muted)' } as const;
+const inheritColor = { color: 'inherit' } as const;
+
+function subMonths(ms: number, months: number): number {
     const d = new Date(ms);
     d.setMonth(d.getMonth() - months);
     return d.getTime();
 }
 
-function toDateInput(ms) {
+function msToDate(ms: number): CalendarDate {
     const d = new Date(ms);
-    const pad = (n) => String(n).padStart(2, '0');
-    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+    return new CalendarDate(d.getFullYear(), d.getMonth() + 1, d.getDate());
 }
+
+function dateToMs(value: DateValue): number {
+    return value.toDate(getLocalTimeZone()).getTime();
+}
+
+type ProgressChartProps = {
+    appList: AppStats[];
+    totalSeries: Array<[number, number]>;
+};
 
 /**
  * Line chart of percent-complete over time: one line per app (baseline
  * Angular/Knockout removed, measured at each PR) plus a bold overall line.
  * The visible date range is user-selectable via presets or custom dates.
  */
-export default function ProgressChart({ appList, totalSeries }) {
+export default function ProgressChart({ appList, totalSeries }: ProgressChartProps) {
     const { dataMin, dataMax } = useMemo(() => {
-        const ts = [];
+        const ts: number[] = [];
         for (const a of appList) for (const p of a.series || []) ts.push(p.t);
         for (const [t] of totalSeries) ts.push(t);
         if (!ts.length) return { dataMin: null, dataMax: null };
         return { dataMin: Math.min(...ts), dataMax: Math.max(...ts) };
     }, [appList, totalSeries]);
 
-    const [preset, setPreset] = useState(DEFAULT_PRESET);
-    const [customFrom, setCustomFrom] = useState(null);
-    const [customTo, setCustomTo] = useState(null);
+    const [preset, setPreset] = useState<PresetKey>(DEFAULT_PRESET);
+    const [customFrom, setCustomFrom] = useState<number | null>(null);
+    const [customTo, setCustomTo] = useState<number | null>(null);
 
-    const { viewMin, viewMax } = useMemo(() => {
-        if (dataMax == null) return { viewMin: undefined, viewMax: undefined };
+    const { viewMin, viewMax } = useMemo<{ viewMin: number | undefined; viewMax: number | undefined }>(() => {
+        if (dataMax == null || dataMin == null) return { viewMin: undefined, viewMax: undefined };
         if (preset === 'custom') {
             return { viewMin: customFrom ?? dataMin, viewMax: customTo ?? dataMax };
         }
@@ -53,19 +72,21 @@ export default function ProgressChart({ appList, totalSeries }) {
         return { viewMin: Math.max(dataMin, subMonths(dataMax, p.months)), viewMax: dataMax };
     }, [preset, customFrom, customTo, dataMin, dataMax]);
 
-    const options = useMemo(() => {
+    const options = useMemo<Highcharts.Options>(() => {
         const appSeries = appList
             .filter((a) => a.series && a.series.length)
             .map((a, i) => ({
+                type: 'line' as const,
                 name: a.app,
                 data: a.series.map((p) => [p.t, Number(p.percentComplete.toFixed(2))]),
-                color: APP_COLORS[i % APP_COLORS.length],
+                color: APP_COLORS[i % APP_COLORS.length] ?? '#38bdf8',
                 lineWidth: 1.5,
             }));
 
-        const series = [
+        const series: Highcharts.SeriesOptionsType[] = [
             ...appSeries,
             {
+                type: 'line' as const,
                 name: 'Overall',
                 data: totalSeries.map(([t, p]) => [t, Number(p.toFixed(2))]),
                 color: '#e2e8f0',
@@ -81,7 +102,7 @@ export default function ProgressChart({ appList, totalSeries }) {
                 height: 440,
                 style: { fontFamily: 'inherit' },
             },
-            title: { text: null },
+            title: { text: '' },
             credits: { enabled: false },
             legend: {
                 itemStyle: { color: '#cbd5e1' },
@@ -89,8 +110,8 @@ export default function ProgressChart({ appList, totalSeries }) {
             },
             xAxis: {
                 type: 'datetime',
-                min: viewMin,
-                max: viewMax,
+                min: viewMin ?? null,
+                max: viewMax ?? null,
                 lineColor: '#334155',
                 tickColor: '#334155',
                 labels: { style: { color: '#94a3b8' } },
@@ -113,7 +134,7 @@ export default function ProgressChart({ appList, totalSeries }) {
                 style: { color: '#e2e8f0' },
                 xDateFormat: '%e %b %Y',
                 pointFormatter() {
-                    return `<b>${this.series.name}</b>: ${this.y.toFixed(1)}%<br/>`;
+                    return `<b>${this.series.name}</b>: ${(this.y ?? 0).toFixed(1)}%<br/>`;
                 },
             },
             plotOptions: {
@@ -125,57 +146,53 @@ export default function ProgressChart({ appList, totalSeries }) {
 
     return (
         <section>
-            <h2>Migration progress over time</h2>
-            <p className="subtitle">
+            <Typography element="h2" variant="headingMd" theme={inheritColor}>
+                Migration progress over time
+            </Typography>
+            <Typography element="p" variant="bodyMd" theme={mutedColor} className="subtitle">
                 Percent of each app’s baseline Angular / Knockout code removed, measured at
                 every pull request from the baseline commit to now.
-            </p>
+            </Typography>
 
-            {dataMax != null && (
+            {dataMax != null && dataMin != null && (
                 <div className="chart-controls">
                     <div className="range-presets">
                         {RANGE_PRESETS.map((r) => (
-                            <button
+                            <Button
                                 key={r.key}
-                                type="button"
-                                className={preset === r.key ? 'range-btn active' : 'range-btn'}
-                                onClick={() => setPreset(r.key)}
+                                size="xs"
+                                variant={preset === r.key ? 'primary' : 'tertiary'}
+                                onPress={() => setPreset(r.key)}
                             >
                                 {r.label}
-                            </button>
+                            </Button>
                         ))}
                     </div>
                     <div className="range-custom">
-                        <label>
-                            From{' '}
-                            <input
-                                type="date"
-                                value={toDateInput(viewMin)}
-                                min={toDateInput(dataMin)}
-                                max={toDateInput(viewMax)}
-                                onChange={(e) => {
-                                    if (!e.target.value) return;
-                                    setCustomFrom(new Date(e.target.value).getTime());
-                                    setCustomTo((prev) => prev ?? viewMax);
-                                    setPreset('custom');
-                                }}
-                            />
-                        </label>
-                        <label>
-                            To{' '}
-                            <input
-                                type="date"
-                                value={toDateInput(viewMax)}
-                                min={toDateInput(viewMin)}
-                                max={toDateInput(dataMax)}
-                                onChange={(e) => {
-                                    if (!e.target.value) return;
-                                    setCustomTo(new Date(e.target.value).getTime());
-                                    setCustomFrom((prev) => prev ?? viewMin);
-                                    setPreset('custom');
-                                }}
-                            />
-                        </label>
+                        <DatePicker
+                            label="From"
+                            value={viewMin != null ? msToDate(viewMin) : null}
+                            minValue={msToDate(dataMin)}
+                            maxValue={viewMax != null ? msToDate(viewMax) : null}
+                            onChange={(value) => {
+                                if (!value) return;
+                                setCustomFrom(dateToMs(value));
+                                setCustomTo((prev) => prev ?? viewMax ?? dataMax);
+                                setPreset('custom');
+                            }}
+                        />
+                        <DatePicker
+                            label="To"
+                            value={viewMax != null ? msToDate(viewMax) : null}
+                            minValue={viewMin != null ? msToDate(viewMin) : null}
+                            maxValue={msToDate(dataMax)}
+                            onChange={(value) => {
+                                if (!value) return;
+                                setCustomTo(dateToMs(value));
+                                setCustomFrom((prev) => prev ?? viewMin ?? dataMin);
+                                setPreset('custom');
+                            }}
+                        />
                     </div>
                 </div>
             )}
