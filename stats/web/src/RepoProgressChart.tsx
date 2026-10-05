@@ -16,7 +16,7 @@ const RANGE_PRESETS: Array<{ key: PresetKey; label: string; months: number | nul
     { key: 'all', label: 'All', months: null },
 ];
 
-const DEFAULT_PRESET: PresetKey = 'all';
+const DEFAULT_PRESET: PresetKey = '1m';
 
 function clampPercent(n: number): number {
     return Math.max(0, Math.min(100, n));
