@@ -198,7 +198,7 @@ export default function App() {
       </section>
 
       <section>
-        <h2>Summary by application</h2>
+        <h2>Migration summary by application</h2>
         <table>
           <thead>
             <tr>
@@ -208,8 +208,6 @@ export default function App() {
               <th className="num">To migrate</th>
               <th className="num">Migrated</th>
               <th>Progress</th>
-              <th className="num">Scenarios</th>
-              <th className="num">Implemented</th>
             </tr>
           </thead>
           <tbody>
@@ -225,8 +223,6 @@ export default function App() {
                 <td>
                   <ProgressBar percent={a.percentComplete} />
                 </td>
-                <td className="num">{formatNumber(a.cucumber)}</td>
-                <td className="num">{formatNumber(a.implemented)}</td>
               </tr>
             ))}
           </tbody>
@@ -240,6 +236,38 @@ export default function App() {
               <td>
                 <ProgressBar percent={totals.percentComplete} />
               </td>
+            </tr>
+          </tfoot>
+        </table>
+      </section>
+
+      <section>
+        <h2>Testing summary by application</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>App</th>
+              <th>Platform</th>
+              <th className="num">Scenarios</th>
+              <th className="num">Implemented</th>
+            </tr>
+          </thead>
+          <tbody>
+            {appList.map((a) => (
+              <tr key={a.app}>
+                <td>{a.app}</td>
+                <td>
+                  <span className={`badge ${a.platform.toLowerCase()}`}>{a.platform}</span>
+                </td>
+                <td className="num">{formatNumber(a.cucumber)}</td>
+                <td className="num">{formatNumber(a.implemented)}</td>
+              </tr>
+            ))}
+          </tbody>
+          <tfoot>
+            <tr>
+              <td>Total</td>
+              <td></td>
               <td className="num">{formatNumber(totals.cucumber)}</td>
               <td className="num">{formatNumber(totals.implemented)}</td>
             </tr>
