@@ -222,7 +222,7 @@ export default function RepoDetail({ name, repo }: RepoDetailProps) {
               <thead>
                 <tr>
                   <th>Category</th>
-                  <th className="num">Lines left to migrate</th>
+                  <th className="num">To migrate</th>
                   <th className="num">% of total</th>
                 </tr>
               </thead>
