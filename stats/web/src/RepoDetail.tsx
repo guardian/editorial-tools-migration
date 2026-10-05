@@ -4,7 +4,6 @@ import { AlertBanner } from '@guardian/stand/AlertBanner';
 import { PlatformBadge } from './components/PlatformBadge.tsx';
 import RepoProgressChart from './RepoProgressChart.tsx';
 import {
-  MIGRATED_CATEGORY,
   TO_MIGRATE_CATEGORIES,
   formatNumber,
   type AppStats,
@@ -41,6 +40,11 @@ export default function RepoDetail({ name, repo }: RepoDetailProps) {
 
   const selected = series[selectedIndex];
   const categories = selected?.categories ?? repo?.categories ?? {};
+  const cucumber = selected?.cucumber ?? repo?.cucumber ?? 0;
+  const implemented = selected?.implemented ?? repo?.implemented ?? 0;
+  const potential = repo?.potentialScenarios ?? 0;
+  const featuresLeftToWrite = Math.max(0, potential - cucumber);
+  const featuresLeftToImplement = Math.max(0, potential - implemented);
 
   // Place commits in proportion to their date, but never closer than MIN_GAP so
   // neighbouring dots can't overlap.
@@ -128,7 +132,7 @@ export default function RepoDetail({ name, repo }: RepoDetailProps) {
               <thead>
                 <tr>
                   <th>Category</th>
-                  <th className="num">Lines</th>
+                  <th className="num">Lines left to migrate</th>
                 </tr>
               </thead>
               <tbody>
@@ -139,10 +143,12 @@ export default function RepoDetail({ name, repo }: RepoDetailProps) {
                   </tr>
                 ))}
                 <tr>
-                  <td>{MIGRATED_CATEGORY}</td>
-                  <td className="num migrated-cell">
-                    {formatNumber(categories[MIGRATED_CATEGORY] || 0)}
-                  </td>
+                  <td>Features left to write</td>
+                  <td className="num">{formatNumber(featuresLeftToWrite)}</td>
+                </tr>
+                <tr>
+                  <td>Features left to implement</td>
+                  <td className="num">{formatNumber(featuresLeftToImplement)}</td>
                 </tr>
               </tbody>
             </table>
