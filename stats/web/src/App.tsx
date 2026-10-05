@@ -10,8 +10,8 @@ import { CoverageBar } from './components/CoverageBar.tsx';
 import { PlatformBadge } from './components/PlatformBadge.tsx';
 import { AppTopBar } from './components/AppTopBar.tsx';
 
-const MIGRATED_CATEGORY = 'Migrated (TS/TSX)';
-const TO_MIGRATE_CATEGORIES = ['JavaScript', 'HTML templates', 'CSS'];
+export const MIGRATED_CATEGORY = 'Migrated (TS/TSX)';
+export const TO_MIGRATE_CATEGORIES = ['JavaScript', 'HTML templates', 'CSS'];
 
 type CsvRow = Record<string, string | undefined>;
 
@@ -79,7 +79,7 @@ function parseCsv(text: string): CsvRow[] {
   });
 }
 
-function formatNumber(n: number): string {
+export function formatNumber(n: number): string {
   return n.toLocaleString('en-GB');
 }
 
@@ -309,7 +309,7 @@ export default function App() {
     );
   }
 
-  const { appList, totals, categoryTotals, totalSeries } = model;
+  const { appList, totals, totalSeries } = model;
 
   const repoMatch = /^#\/repo\/(.+)$/.exec(hash);
   if (repoMatch?.[1]) {
@@ -326,11 +326,7 @@ export default function App() {
     <>
       <AppTopBar />
       <main className="container">
-        <header>
-          <Typography element="p" variant="bodyMd" className="subtitle">
-            Frontend lines of code to migrate from Angular / Knockout to React.
-          </Typography>
-        </header>
+        <ProgressChart appList={appList} totalSeries={totalSeries} />
 
       <section className="cards">
         <StatCard label="Lines to migrate" value={formatNumber(totals.toMigrate)} accent="warn" />
@@ -437,47 +433,6 @@ export default function App() {
           </tfoot>
         </table>
       </section>
-
-      <section>
-        <Typography element="h2" variant="headingMd">
-          Breakdown by category
-        </Typography>
-        <table>
-          <thead>
-            <tr>
-              <th>App</th>
-              {TO_MIGRATE_CATEGORIES.map((c) => (
-                <th key={c} className="num">{c}</th>
-              ))}
-              <th className="num">{MIGRATED_CATEGORY}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {appList.map((a) => (
-              <tr key={a.app}>
-                <td>{a.app}</td>
-                {TO_MIGRATE_CATEGORIES.map((c) => (
-                  <td key={c} className="num">{formatNumber(a.categories[c] || 0)}</td>
-                ))}
-                <td className="num migrated-cell">
-                  {formatNumber(a.categories[MIGRATED_CATEGORY] || 0)}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-          <tfoot>
-            <tr>
-              <td>Total</td>
-              {categoryTotals.map((c) => (
-                <td key={c.category} className="num">{formatNumber(c.lines)}</td>
-              ))}
-              <td className="num migrated-cell">{formatNumber(totals.migrated)}</td>
-            </tr>
-          </tfoot>
-        </table>
-      </section>
-
-      <ProgressChart appList={appList} totalSeries={totalSeries} />
 
       <BurndownChart totalToMigrate={totals.toMigrate} />
       </main>
