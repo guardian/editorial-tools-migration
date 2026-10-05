@@ -123,33 +123,46 @@ export default function RepoProgressChart({ repo, highlight }: RepoProgressChart
                 labels: { style: { color: '#94a3b8' } },
                 plotLines:
                     highlight != null
-                        ? [
-                              {
-                                  value: highlight.t,
-                                  color: '#0f172a',
-                                  width: 2,
-                                  dashStyle: 'Dash',
-                                  zIndex: 4,
-                                  label: {
-                                      text: [
-                                          highlight.commit ? highlight.commit.slice(0, 7) : null,
-                                          highlight.pr ? `#${highlight.pr}` : null,
-                                          new Date(highlight.t).toLocaleDateString('en-GB', {
-                                              day: 'numeric',
-                                              month: 'short',
-                                              year: 'numeric',
-                                          }),
-                                      ]
-                                          .filter(Boolean)
-                                          .join(' · '),
-                                      rotation: 0,
-                                      align: 'left',
-                                      x: 5,
-                                      y: 14,
-                                      style: { color: '#0f172a', fontSize: '0.7rem', fontWeight: '600' },
+                        ? (() => {
+                              const axisMin = viewMin ?? dataMin ?? highlight.t;
+                              const axisMax = viewMax ?? dataMax ?? highlight.t;
+                              const span = axisMax - axisMin;
+                              // Flip the label to the left of the line near the right edge.
+                              const alignRight = span > 0 && (highlight.t - axisMin) / span > 0.7;
+                              const line1 = [
+                                  highlight.commit ? highlight.commit.slice(0, 7) : null,
+                                  highlight.pr ? `#${highlight.pr}` : null,
+                              ]
+                                  .filter(Boolean)
+                                  .join(' · ');
+                              const line2 = new Date(highlight.t).toLocaleDateString('en-GB', {
+                                  day: 'numeric',
+                                  month: 'short',
+                                  year: 'numeric',
+                              });
+                              return [
+                                  {
+                                      value: highlight.t,
+                                      color: '#0f172a',
+                                      width: 2,
+                                      dashStyle: 'Dash' as const,
+                                      zIndex: 4,
+                                      label: {
+                                          text: [line1, line2].filter(Boolean).join('<br/>'),
+                                          rotation: 0,
+                                          align: alignRight ? ('right' as const) : ('left' as const),
+                                          x: alignRight ? -6 : 6,
+                                          y: 14,
+                                          style: {
+                                              color: '#0f172a',
+                                              fontSize: '0.7rem',
+                                              fontWeight: '600',
+                                              textAlign: alignRight ? 'right' : 'left',
+                                          },
+                                      },
                                   },
-                              },
-                          ]
+                              ];
+                          })()
                         : [],
             },
             yAxis: {
@@ -178,7 +191,7 @@ export default function RepoProgressChart({ repo, highlight }: RepoProgressChart
             },
             series,
         };
-    }, [repo, viewMin, viewMax, highlight]);
+    }, [repo, viewMin, viewMax, highlight, dataMin, dataMax]);
 
     return (
         <section>
