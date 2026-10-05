@@ -17,10 +17,12 @@ type CsvRow = Record<string, string | undefined>;
 
 type SamplePoint = {
   t: number;
+  commit: string;
   toMigrate: number;
   percentComplete: number;
   cucumber: number;
   implemented: number;
+  categories: Record<string, number>;
 };
 
 type AppStats = {
@@ -148,6 +150,7 @@ export default function App() {
     // uses the whole time series.
     type Sample = {
       t: number | null;
+      commit: string;
       baseline: number;
       toMigrate: number;
       migrated: number;
@@ -171,6 +174,7 @@ export default function App() {
       if (!s) {
         s = {
           t: row.timestamp ? Date.parse(row.timestamp) : null,
+          commit: row.commit || '',
           baseline: Number(row.baseline) || 0,
           toMigrate: 0,
           migrated: 0,
@@ -202,10 +206,12 @@ export default function App() {
         .filter((s): s is Sample & { t: number } => s.t != null && s.baseline > 0)
         .map((s) => ({
           t: s.t,
+          commit: s.commit,
           toMigrate: s.toMigrate,
           percentComplete: clampPercent(((s.baseline - s.toMigrate) / s.baseline) * 100),
           cucumber: s.cucumber,
           implemented: s.implemented,
+          categories: s.categories,
         }));
       const total = toMigrate + migrated;
       const percentComplete = baseline

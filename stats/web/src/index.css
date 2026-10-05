@@ -175,6 +175,85 @@ a:hover {
   white-space: nowrap;
 }
 
+.commit-timeline {
+  overflow-x: auto;
+  padding: 1.25rem 1.5rem 3.25rem;
+  margin-bottom: 1rem;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+
+.commit-track {
+  position: relative;
+  height: 1.2rem;
+  min-width: 100%;
+}
+
+/* Connecting line that runs through the dots. */
+.commit-track::before {
+  content: '';
+  position: absolute;
+  top: 0.45rem;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--border);
+  z-index: 0;
+}
+
+.commit-node {
+  appearance: none;
+  font: inherit;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  position: absolute;
+  top: 0;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0;
+  color: var(--muted);
+}
+
+.commit-dot {
+  width: 0.9rem;
+  height: 0.9rem;
+  border-radius: 50%;
+  background: var(--panel-2);
+  border: 2px solid var(--muted);
+  z-index: 1;
+  transition: background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.commit-node:hover .commit-dot {
+  border-color: var(--accent);
+}
+
+.commit-node.is-selected .commit-dot {
+  background: var(--accent);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 4px rgba(56, 189, 248, 0.2);
+}
+
+/* Angle the labels so neighbouring dates don't overlap. */
+.commit-date {
+  position: absolute;
+  top: 1.4rem;
+  left: 50%;
+  font-size: 0.7rem;
+  white-space: nowrap;
+  transform-origin: left center;
+  transform: rotate(45deg);
+}
+
+.commit-node.is-selected .commit-date {
+  color: var(--text);
+  font-weight: 600;
+}
+
 .projection-summary {
   margin-bottom: 1rem;
 }
