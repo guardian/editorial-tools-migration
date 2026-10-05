@@ -177,7 +177,7 @@ a:hover {
 
 .commit-timeline {
   overflow-x: auto;
-  padding: 1.25rem 1.5rem 3.25rem;
+  padding: 2.25rem 1.5rem 4.25rem;
   margin-bottom: 1rem;
   background: var(--panel);
   border: 1px solid var(--border);
@@ -186,7 +186,7 @@ a:hover {
 
 .commit-track {
   position: relative;
-  height: 1.2rem;
+  height: 2.5rem;
   min-width: 100%;
 }
 
