@@ -39,6 +39,7 @@ function dateToMs(value: DateValue): number {
 
 type RepoProgressChartProps = {
     repo: AppStats;
+    highlight?: { t: number; commit: string; pr: string } | null;
 };
 
 /**
@@ -46,7 +47,7 @@ type RepoProgressChartProps = {
  * testing coverage lines (scenarios written and implemented, as a share of the
  * repo's estimated potential scenarios) measured at every pull request.
  */
-export default function RepoProgressChart({ repo }: RepoProgressChartProps) {
+export default function RepoProgressChart({ repo, highlight }: RepoProgressChartProps) {
     const { dataMin, dataMax } = useMemo(() => {
         const ts = (repo.series || []).map((p) => p.t);
         if (!ts.length) return { dataMin: null, dataMax: null };
@@ -120,6 +121,36 @@ export default function RepoProgressChart({ repo }: RepoProgressChartProps) {
                 lineColor: '#334155',
                 tickColor: '#334155',
                 labels: { style: { color: '#94a3b8' } },
+                plotLines:
+                    highlight != null
+                        ? [
+                              {
+                                  value: highlight.t,
+                                  color: '#0f172a',
+                                  width: 2,
+                                  dashStyle: 'Dash',
+                                  zIndex: 4,
+                                  label: {
+                                      text: [
+                                          highlight.commit ? highlight.commit.slice(0, 7) : null,
+                                          highlight.pr ? `#${highlight.pr}` : null,
+                                          new Date(highlight.t).toLocaleDateString('en-GB', {
+                                              day: 'numeric',
+                                              month: 'short',
+                                              year: 'numeric',
+                                          }),
+                                      ]
+                                          .filter(Boolean)
+                                          .join(' · '),
+                                      rotation: 0,
+                                      align: 'left',
+                                      x: 5,
+                                      y: 14,
+                                      style: { color: '#0f172a', fontSize: '0.7rem', fontWeight: '600' },
+                                  },
+                              },
+                          ]
+                        : [],
             },
             yAxis: {
                 min: 0,
@@ -147,7 +178,7 @@ export default function RepoProgressChart({ repo }: RepoProgressChartProps) {
             },
             series,
         };
-    }, [repo, viewMin, viewMax]);
+    }, [repo, viewMin, viewMax, highlight]);
 
     return (
         <section>

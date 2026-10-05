@@ -152,7 +152,12 @@ export default function RepoDetail({ name, repo }: RepoDetailProps) {
 
       {repo ? (
         <>
-          <RepoProgressChart repo={repo} />
+          <RepoProgressChart
+            repo={repo}
+            highlight={
+              selected ? { t: selected.t, commit: selected.commit, pr: selected.pr } : null
+            }
+          />
 
           {series.length > 0 && (
             <section>
