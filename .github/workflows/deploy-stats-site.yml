@@ -1,0 +1,55 @@
+name: Deploy stats site
+
+# Builds the Vite dashboard in stats/web and hands it to
+# guardian/actions-static-site, which provisions (shared) AWS infra, a custom
+# domain and Google auth, and creates a Riff-Raff build to deploy it.
+#
+# Prerequisites (one-off, see README/notes):
+#   1. Register this repo in guardian/riffraff-platform with project name
+#      `deploy::editorial-migration-stats` and merge that PR first — it creates
+#      the `GU_RIFF_RAFF_ROLE_ARN` repo secret this workflow relies on.
+#   2. Ask DevX to add the domain to the Google OAuth project so auth works.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    # Required for the Riff-Raff upload (OIDC federation into AWS).
+    permissions:
+      id-token: write
+      contents: read
+      pull-requests: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: stats/web/package-lock.json
+
+      - name: Build dashboard
+        working-directory: stats/web
+        run: |
+          npm ci
+          npm run build
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: stats-site
+          path: stats/web/dist
+
+      - uses: guardian/actions-static-site@v3
+        with:
+          app: editorial-migration-stats
+          domain: editorial-migration-stats.gutools.co.uk
+          artifact: stats-site
+          roleArn: ${{ secrets.GU_RIFF_RAFF_ROLE_ARN }}
+          githubToken: ${{ secrets.GITHUB_TOKEN }}
