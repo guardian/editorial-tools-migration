@@ -48,7 +48,7 @@ jobs:
 
       - uses: guardian/actions-static-site@v3
         with:
-          app: editorial-migration-stats
+          app: editorial-tools-migration-stats
           domain: editorial-migration-stats.gutools.co.uk
           artifact: stats-site
           roleArn: ${{ secrets.GU_RIFF_RAFF_ROLE_ARN }}
