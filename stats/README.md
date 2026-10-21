@@ -20,7 +20,8 @@ python3 count_frontend_loc.py            # snapshot of current HEAD for every re
 python3 count_frontend_loc.py --refresh  # re-pull latest before counting
 ```
 
-The CSV (`report.csv`) has one row per app + category with these columns:
+The CSV (`web/public/report.csv`, where the dashboard reads it) has one row per
+app + category with these columns:
 
 `app, platform, category, status, lines, commit, timestamp, baseline, percent_complete`
 
@@ -86,6 +87,4 @@ python3 count_frontend_loc.py --history \
   default 1000).
 - By default only commits not already present in the CSV are appended, so reruns
   are incremental. Pass `--overwrite` to regenerate the whole history.
-- History mode does not update the React dashboard's copy, which expects a
-  single snapshot.
 

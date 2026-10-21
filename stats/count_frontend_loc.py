@@ -30,7 +30,6 @@ import argparse
 import csv
 import json
 import re
-import shutil
 import subprocess
 import sys
 from dataclasses import dataclass, field
@@ -773,14 +772,6 @@ def resolve_baselines(cli_baselines: list[str] | None) -> dict[str, str]:
     return baselines
 
 
-def copy_to_web(csv_path: Path) -> None:
-    """Keep the React app's copy in sync so `npm run dev` shows fresh data."""
-    web_public = Path("web/public/report.csv")
-    if web_public.parent.exists():
-        shutil.copyfile(csv_path, web_public)
-        print(f"CSV copied to {web_public}")
-
-
 def run_snapshot(args: argparse.Namespace) -> int:
     all_stats: list[RepoStats] = []
     all_rows: list[dict] = []
@@ -801,7 +792,6 @@ def run_snapshot(args: argparse.Namespace) -> int:
     if all_stats:
         print_report(all_stats)
         write_csv(all_rows, args.csv, append=False)
-        copy_to_web(args.csv)
     return 0
 
 
@@ -856,10 +846,6 @@ def run_history(args: argparse.Namespace) -> int:
 
     if new_rows:
         write_csv(new_rows, args.csv, append=append)
-        print(
-            "History mode records one row per PR; the React dashboard "
-            "expects a single snapshot, so web/public/report.csv was not updated."
-        )
     else:
         print("\nNo new PRs to record.")
     return 0
@@ -881,8 +867,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "--csv",
         type=Path,
-        default=Path("report.csv"),
-        help="Path to write the CSV report (default: report.csv)",
+        default=Path("web/public/report.csv"),
+        help="Path to write the CSV report (default: web/public/report.csv)",
     )
     parser.add_argument(
         "--history",
