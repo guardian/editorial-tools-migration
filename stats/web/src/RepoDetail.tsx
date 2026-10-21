@@ -39,8 +39,35 @@ function formatShortDate(ms: number): string {
   });
 }
 
+type SeriesPoint = AppStats['series'][number];
+
+// The five counts shown in the breakdown table: the to-migrate categories plus
+// the two Cucumber metrics. The timeline only shows commits where one changed.
+function countSignature(point: SeriesPoint): string {
+  const cats = point.categories ?? {};
+  return [
+    ...TO_MIGRATE_CATEGORIES.map((c) => cats[c] || 0),
+    point.cucumber || 0,
+    point.implemented || 0,
+  ].join('|');
+}
+
 export default function RepoDetail({ name, repo }: RepoDetailProps) {
-  const series = repo?.series ?? [];
+  // Keep only commits that changed at least one of the five tracked counts,
+  // collapsing runs of PRs that left every count unchanged.
+  const series = useMemo<SeriesPoint[]>(() => {
+    const all = repo?.series ?? [];
+    const filtered: SeriesPoint[] = [];
+    let prevSig: string | null = null;
+    for (const point of all) {
+      const sig = countSignature(point);
+      if (sig !== prevSig) {
+        filtered.push(point);
+        prevSig = sig;
+      }
+    }
+    return filtered;
+  }, [repo]);
   // Default the timeline to the most recent commit.
   const [selectedIndex, setSelectedIndex] = useState(() => Math.max(0, series.length - 1));
 
@@ -165,7 +192,8 @@ export default function RepoDetail({ name, repo }: RepoDetailProps) {
                 Commit timeline
               </Typography>
               <Typography element="p" variant="bodyMd" className="subtitle">
-                Select a commit to view its category breakdown below.
+                Showing only commits that changed one of the tracked counts. Select a
+                commit to view its category breakdown below.
               </Typography>
               <div
                 className="commit-timeline"
