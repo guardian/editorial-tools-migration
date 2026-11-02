@@ -24,6 +24,7 @@ exports[`The FeatureLibrary stack matches the snapshot 1`] = `
       "GuAccessLoggingBucketParameter",
       "GuApplicationTargetGroup",
       "GuHttpsApplicationListener",
+      "GuCname",
     ],
     "gu:cdk:version": "TEST",
   },
@@ -207,6 +208,31 @@ exports[`The FeatureLibrary stack matches the snapshot 1`] = `
         ],
       },
       "Type": "AWS::IAM::Policy",
+    },
+    "DnsRecord": {
+      "Properties": {
+        "Name": "feature-library.code.dev-gutools.co.uk",
+        "RecordType": "CNAME",
+        "ResourceRecords": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                {
+                  "Fn::GetAtt": [
+                    "LoadBalancerFeaturelibraryC4180DDF",
+                    "DNSName",
+                  ],
+                },
+                ".",
+              ],
+            ],
+          },
+        ],
+        "Stage": "CODE",
+        "TTL": 300,
+      },
+      "Type": "Guardian::DNS::RecordSet",
     },
     "GetDistributablePolicyFeaturelibrary3328C485": {
       "Properties": {
