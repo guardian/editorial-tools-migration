@@ -1,0 +1,6 @@
+# Transient downloaded repositories
+.repos/
+
+# Python
+__pycache__/
+*.py[cod]
