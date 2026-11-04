@@ -1,0 +1,89 @@
+name: feature-library
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - feature-library/**
+      - cdk/**
+      - .tool-versions
+      - .github/workflows/feature-library.yml
+  pull_request:
+    paths:
+      - feature-library/**
+      - cdk/**
+      - .tool-versions
+      - .github/workflows/feature-library.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: guardian/setup-scala@c9f10cca1674ecb2ae7ee739786ef9f0cdb9d07c # v2.0.0
+
+      - name: Scala build
+        working-directory: feature-library
+        run: |
+          sbt scalafmtCheckAll test Debian/packageBin
+          # The instance user data installs /feature-library/feature-library.deb.
+          mv target/feature-library_*_all.deb target/feature-library.deb
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .tool-versions
+          cache: npm
+          cache-dependency-path: cdk/package-lock.json
+
+      - name: CDK build
+        working-directory: cdk
+        run: |
+          npm ci
+          npm run lint
+          npm test
+          npm run synth
+
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: riff-raff-artifacts
+          path: |
+            feature-library/target/feature-library.deb
+            cdk/cdk.out/riff-raff.yaml
+            cdk/cdk.out/FeatureLibrary-euwest-1-CODE.template.json
+            cdk/cdk.out/FeatureLibrary-euwest-1-PROD.template.json
+          if-no-files-found: error
+          retention-days: 1
+
+  riff-raff:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      # Required by actions-riff-raff to assume the upload role via OIDC
+      id-token: write
+      # Required by actions-riff-raff to comment on the PR
+      pull-requests: write
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: riff-raff-artifacts
+
+      - uses: guardian/actions-riff-raff@9b7f9fe778957e6dc3ef4ab70fec015119ccba83 # v4.3.7
+        with:
+          projectName: workflow::feature-library
+          roleArn: ${{ secrets.GU_RIFF_RAFF_ROLE_ARN }}
+          githubToken: ${{ secrets.GITHUB_TOKEN }}
+          configPath: cdk/cdk.out/riff-raff.yaml
+          contentDirectories: |
+            feature-library:
+              - feature-library/target/feature-library.deb
+            cdk.out:
+              - cdk/cdk.out/FeatureLibrary-euwest-1-CODE.template.json
+              - cdk/cdk.out/FeatureLibrary-euwest-1-PROD.template.json
