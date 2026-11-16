@@ -1,0 +1,3 @@
+# Health check (load balancers call this with the instance IP as the Host header)
++ anyhost
+GET     /management/healthcheck     controllers.Management.healthCheck

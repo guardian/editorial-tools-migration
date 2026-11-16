@@ -1,3 +1,4 @@
 node 26
-
 github:guardian/devenv 20260930-111347
+java corretto-25
+sbt 1.13.1
