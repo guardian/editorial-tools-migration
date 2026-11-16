@@ -4,6 +4,7 @@ exports[`The FeatureLibrary stack matches the snapshot 1`] = `
 {
   "Metadata": {
     "gu:cdk:constructs": [
+      "GuGetS3ObjectsPolicy",
       "GuVpcParameter",
       "GuSubnetListParameter",
       "GuSubnetListParameter",
@@ -233,6 +234,38 @@ exports[`The FeatureLibrary stack matches the snapshot 1`] = `
         "TTL": 300,
       },
       "Type": "Guardian::DNS::RecordSet",
+    },
+    "FeatureLibraryData14FC2467": {
+      "DeletionPolicy": "Retain",
+      "Properties": {
+        "BucketName": "feature-library-code",
+        "PublicAccessBlockConfiguration": {
+          "BlockPublicAcls": true,
+          "BlockPublicPolicy": true,
+          "IgnorePublicAcls": true,
+          "RestrictPublicBuckets": true,
+        },
+        "Tags": [
+          {
+            "Key": "gu:cdk:version",
+            "Value": "TEST",
+          },
+          {
+            "Key": "gu:repo",
+            "Value": "guardian/editorial-tools-migration",
+          },
+          {
+            "Key": "Stack",
+            "Value": "workflow",
+          },
+          {
+            "Key": "Stage",
+            "Value": "CODE",
+          },
+        ],
+      },
+      "Type": "AWS::S3::Bucket",
+      "UpdateReplacePolicy": "Retain",
     },
     "GetDistributablePolicyFeaturelibrary3328C485": {
       "Properties": {
@@ -611,6 +644,38 @@ exports[`The FeatureLibrary stack matches the snapshot 1`] = `
       },
       "Type": "AWS::IAM::Policy",
     },
+    "ReadApplicationSecret0EE3CA8D": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "s3:GetObject",
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::Join": [
+                  "",
+                  [
+                    "arn:aws:s3:::",
+                    {
+                      "Ref": "FeatureLibraryData14FC2467",
+                    },
+                    "/conf/application.secret.conf",
+                  ],
+                ],
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "ReadApplicationSecret0EE3CA8D",
+        "Roles": [
+          {
+            "Ref": "InstanceRoleFeaturelibrary686D2618",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
     "SsmSshPolicy4CFC977E": {
       "Properties": {
         "PolicyDocument": {
@@ -801,6 +866,11 @@ aws s3 cp 's3://",
                     "Ref": "DistributionBucketName",
                   },
                   "/workflow/CODE/feature-library/feature-library.deb' '/feature-library/feature-library.deb'
+aws s3 cp 's3://",
+                  {
+                    "Ref": "FeatureLibraryData14FC2467",
+                  },
+                  "/conf/application.secret.conf' /etc/gu/application.secret.conf
 dpkg -i /feature-library/feature-library.deb",
                 ],
               ],
