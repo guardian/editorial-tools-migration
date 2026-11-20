@@ -6,8 +6,9 @@ For each repository listed below the script performs a shallow git clone
 code, broken down by file extension. This supports the migration project of
 moving these apps from their current platform (Angular / Knockout) to React.
 
-No third-party dependencies are required - only Python 3.8+ and git. History
-mode additionally uses the GitHub CLI (`gh`, authenticated) to read merged PRs.
+Requires Python 3.9+, git and the packages in requirements.txt
+(`pip install -r requirements.txt`). History mode additionally uses the GitHub
+CLI (`gh`, authenticated) to read merged PRs.
 
 Usage:
     python3 count_frontend_loc.py                # count all repos at current HEAD
@@ -34,6 +35,10 @@ import subprocess
 import sys
 from dataclasses import dataclass, field
 from pathlib import Path
+
+from gherkin.errors import CompositeParserException
+from gherkin.parser import Parser as GherkinParser
+from gherkin.pickles.compiler import Compiler as PickleCompiler
 
 # --- Repositories to analyse -------------------------------------------------
 
@@ -403,14 +408,9 @@ def read_text(path: Path) -> str | None:
         return None
 
 
-# Gherkin scenario keywords (Scenario, Scenario Outline / Template).
-SCENARIO_RE = re.compile(
-    r"^\s*(?:Scenario Outline|Scenario Template|Scenario)\s*:", re.MULTILINE
-)
-
-
-def count_scenarios(text: str) -> int:
-    return len(SCENARIO_RE.findall(text))
+def count_scenarios(text: str, uri: str = "") -> int:
+    """Test cases in a feature; each outline Examples row counts separately."""
+    return len(parse_feature_scenarios(text, uri))
 
 
 # --- Cucumber step-definition coverage ---------------------------------------
@@ -422,8 +422,6 @@ STEP_DEF_RE = re.compile(
     r"""|/((?:[^/\\\n]|\\.)*)/[a-z]*)"""
 )
 _PARAM_RE = re.compile(r"\{[^}]*\}")
-_STEP_LINE_RE = re.compile(r"^\s*(?:Given|When|Then|And|But|\*)\s+(.*\S)\s*$")
-_SCENARIO_LINE_RE = re.compile(r"^(?:Scenario Outline|Scenario Template|Scenario)\s*:")
 # Tags marking scenarios that are written but not actually implemented yet.
 NOT_IMPLEMENTED_TAGS = {"@pending", "@todo", "@wip", "@skip", "@manual", "@ignore"}
 
@@ -464,51 +462,18 @@ def collect_step_patterns(repo_root: Path) -> list["re.Pattern[str]"]:
     return patterns
 
 
-def parse_feature_scenarios(text: str) -> list[tuple[list[str], set[str]]]:
-    """Parse a feature into (steps, tags) per scenario; steps include Background."""
-    scenarios: list[tuple[list[str], set[str]]] = []
-    background: list[str] = []
-    current: list[str] | None = None
-    in_background = False
-    tags: set[str] = set()
-    feature_tags: set[str] = set()
-    for raw in text.splitlines():
-        line = raw.strip()
-        if not line or line.startswith("#"):
-            continue
-        if line.startswith("@"):
-            tags |= {t.lower() for t in line.split()}
-            continue
-        if line.startswith("Feature:"):
-            feature_tags = tags
-            tags = set()
-            continue
-        if line.startswith("Background:"):
-            in_background = True
-            current = None
-            tags = set()
-            continue
-        if _SCENARIO_LINE_RE.match(line):
-            in_background = False
-            current = []
-            scenarios.append((current, tags | feature_tags))
-            tags = set()
-            continue
-        if line.startswith(("Examples:", "Rule:")):
-            in_background = False
-            current = None
-            tags = set()
-            continue
-        if line.startswith("|") or line.startswith('"""'):
-            continue
-        sm = _STEP_LINE_RE.match(line)
-        if sm:
-            step = sm.group(1).strip()
-            if in_background:
-                background.append(step)
-            elif current is not None:
-                current.append(step)
-    return [(background + steps, t) for steps, t in scenarios]
+def parse_feature_scenarios(text: str, uri: str = "") -> list[tuple[list[str], set[str]]]:
+    """(steps, tags) per Cucumber test case (pickle); outlines expand per Examples row."""
+    try:
+        document = GherkinParser().parse(text)
+    except CompositeParserException as e:
+        print(f"warning: could not parse {uri or 'feature'}: {e}", file=sys.stderr)
+        return []
+    document["uri"] = uri
+    return [
+        ([s["text"] for s in pickle["steps"]], {t["name"].lower() for t in pickle["tags"]})
+        for pickle in PickleCompiler().compile(document)
+    ]
 
 
 def count_implemented_scenarios(repo_root: Path) -> int:
@@ -523,7 +488,7 @@ def count_implemented_scenarios(repo_root: Path) -> int:
         text = read_text(path)
         if text is None:
             continue
-        for steps, tags in parse_feature_scenarios(text):
+        for steps, tags in parse_feature_scenarios(text, path.relative_to(repo_root).as_posix()):
             if not steps or tags & NOT_IMPLEMENTED_TAGS:
                 continue
             if all(any(p.search(s) for p in patterns) for s in steps):
@@ -555,7 +520,7 @@ def analyse_repo(repo: Repo, repo_root: Path) -> RepoStats:
         # Override: count listed files as already migrated regardless of type.
         category = MIGRATED_CATEGORY if overridden else EXT_TO_CATEGORY[ext]
         # Feature files are measured by scenario count, everything else by lines.
-        count = count_scenarios(text) if category == CUCUMBER_CATEGORY else len(text.splitlines())
+        count = count_scenarios(text, rel) if category == CUCUMBER_CATEGORY else len(text.splitlines())
         stats.by_category[category] = stats.by_category.get(category, 0) + count
         stats.total_lines += count
         stats.total_files += 1
@@ -600,7 +565,7 @@ def print_report(all_stats: list[RepoStats]) -> None:
 
     grand_files = 0
     grand_baseline = 0
-    grand_to_migrate = 0
+    grand_to_migrate = 0, path.relative_to(repo_root).as_posix()
     grand_migrated = 0
     grand_cucumber = 0
     grand_impl = 0
@@ -632,7 +597,6 @@ def print_report(all_stats: list[RepoStats]) -> None:
     print("\n" + "=" * 78)
     print("Frontend lines of code by repository")
     print("=" * 78)
-
     header = (
         f"{'App':<16} {'Platform':<10} {'Category':<18} "
         f"{'To migrate':>12} {'Migrated':>12}"

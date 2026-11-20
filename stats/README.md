@@ -16,6 +16,9 @@ Those applications and their repos are:
 ## Generating the report
 
 ```sh
+python3 -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt
+
 python3 count_frontend_loc.py            # snapshot of current HEAD for every repo
 python3 count_frontend_loc.py --refresh  # re-pull latest before counting
 ```
