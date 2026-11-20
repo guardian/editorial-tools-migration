@@ -68,7 +68,7 @@ REPOS: list[Repo] = [
 # type (e.g. a stylesheet that has been ported), keyed by app -> repo-relative
 # paths. This overrides classification only; the counting rules are unchanged.
 MIGRATED_FILE_OVERRIDES: dict[str, set[str]] = {
-    "Restorer": {"public/gu-noting.css"},
+    "Restorer": {"public/gu-noting.css", "public/src/app/fonts.css"},
 }
 
 # --- What counts as "frontend" code -----------------------------------------
