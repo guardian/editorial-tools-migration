@@ -440,11 +440,16 @@ def _cucumber_expr_to_regex(expr: str) -> "re.Pattern[str]":
     return re.compile("^" + pattern + "$")
 
 
+def is_step_file(path: Path, repo_root: Path) -> bool:
+    # Mirrors playwright-bdd's `steps: "steps/**/*.ts"` config used by these repos.
+    return path.name.endswith(".steps.ts") or "steps" in path.relative_to(repo_root).parts[:-1]
+
+
 def collect_step_patterns(repo_root: Path) -> list["re.Pattern[str]"]:
-    """Compile matchers for every step definition in *.steps.ts under repo_root."""
+    """Compile matchers for every step definition in step files under repo_root."""
     patterns: list[re.Pattern[str]] = []
-    for path in repo_root.rglob("*.steps.ts"):
-        if not path.is_file() or is_excluded(path, repo_root):
+    for path in repo_root.rglob("*.ts"):
+        if not path.is_file() or is_excluded(path, repo_root) or not is_step_file(path, repo_root):
             continue
         text = read_text(path)
         if text is None:
