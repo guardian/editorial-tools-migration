@@ -6,6 +6,7 @@ import { DatePicker } from '@guardian/stand/DatePicker';
 import { Typography } from '@guardian/stand/Typography';
 import { CalendarDate, getLocalTimeZone, type DateValue } from '@internationalized/date';
 import type { AppStats } from './App.tsx';
+import { areaFill } from './areaFill.ts';
 
 const APP_COLORS = ['#38bdf8', '#a78bfa', '#f472b6', '#fbbf24', '#34d399'];
 
@@ -41,7 +42,7 @@ type ProgressChartProps = {
 };
 
 /**
- * Line chart of percent-complete over time: one line per app (baseline
+ * Area chart of percent-complete over time: one line per app (baseline
  * Angular/Knockout removed, measured at each PR) plus a bold overall line.
  * The visible date range is user-selectable via presets or custom dates.
  */
@@ -71,21 +72,26 @@ export default function ProgressChart({ appList, totalSeries }: ProgressChartPro
     const options = useMemo<Highcharts.Options>(() => {
         const appSeries = appList
             .filter((a) => a.series && a.series.length)
-            .map((a, i) => ({
-                type: 'line' as const,
-                name: a.app,
-                data: a.series.map((p) => [p.t, Number(p.percentComplete.toFixed(2))]),
-                color: APP_COLORS[i % APP_COLORS.length] ?? '#38bdf8',
-                lineWidth: 1.5,
-            }));
+            .map((a, i) => {
+                const color = APP_COLORS[i % APP_COLORS.length] ?? '#38bdf8';
+                return {
+                    type: 'area' as const,
+                    name: a.app,
+                    data: a.series.map((p) => [p.t, Number(p.percentComplete.toFixed(2))]),
+                    color,
+                    fillColor: areaFill(color),
+                    lineWidth: 1.5,
+                };
+            });
 
         const series: Highcharts.SeriesOptionsType[] = [
             ...appSeries,
             {
-                type: 'line' as const,
+                type: 'area' as const,
                 name: 'Overall',
                 data: totalSeries.map(([t, p]) => [t, Number(p.toFixed(2))]),
                 color: '#0f172a',
+                fillColor: areaFill('#0f172a'),
                 lineWidth: 3,
                 zIndex: 5,
             },
@@ -93,7 +99,7 @@ export default function ProgressChart({ appList, totalSeries }: ProgressChartPro
 
         return {
             chart: {
-                type: 'line',
+                type: 'area',
                 backgroundColor: 'transparent',
                 height: 440,
                 style: { fontFamily: 'inherit' },
@@ -134,7 +140,7 @@ export default function ProgressChart({ appList, totalSeries }: ProgressChartPro
                 },
             },
             plotOptions: {
-                line: { marker: { enabled: false, radius: 2 } },
+                area: { marker: { enabled: false, radius: 2 } },
             },
             series,
         };

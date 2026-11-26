@@ -6,6 +6,7 @@ import { DatePicker } from '@guardian/stand/DatePicker';
 import { Typography } from '@guardian/stand/Typography';
 import { CalendarDate, getLocalTimeZone, type DateValue } from '@internationalized/date';
 import type { AppStats } from './App.tsx';
+import { areaFill } from './areaFill.ts';
 
 type PresetKey = '1m' | '3m' | '6m' | 'all' | 'custom';
 
@@ -72,38 +73,41 @@ export default function RepoProgressChart({ repo, highlight }: RepoProgressChart
         const potential = repo.potentialScenarios;
         const series: Highcharts.SeriesOptionsType[] = [
             {
-                type: 'line' as const,
+                type: 'area' as const,
                 name: 'Migration complete',
                 data: repo.series.map((p) => [p.t, Number(p.percentComplete.toFixed(2))]),
                 color: '#0f172a',
+                fillColor: areaFill('#0f172a'),
                 lineWidth: 3,
                 zIndex: 5,
             },
             {
-                type: 'line' as const,
+                type: 'area' as const,
                 name: 'Scenarios added',
                 data: repo.series.map((p) => [
                     p.t,
                     Number((potential ? clampPercent((p.cucumber / potential) * 100) : 0).toFixed(2)),
                 ]),
                 color: '#38bdf8',
+                fillColor: areaFill('#38bdf8'),
                 lineWidth: 1.5,
             },
             {
-                type: 'line' as const,
+                type: 'area' as const,
                 name: 'Scenarios implemented',
                 data: repo.series.map((p) => [
                     p.t,
                     Number((potential ? clampPercent((p.implemented / potential) * 100) : 0).toFixed(2)),
                 ]),
                 color: '#34d399',
+                fillColor: areaFill('#34d399'),
                 lineWidth: 1.5,
             },
         ];
 
         return {
             chart: {
-                type: 'line',
+                type: 'area',
                 backgroundColor: 'transparent',
                 height: 440,
                 style: { fontFamily: 'inherit' },
@@ -187,7 +191,7 @@ export default function RepoProgressChart({ repo, highlight }: RepoProgressChart
                 },
             },
             plotOptions: {
-                line: { marker: { enabled: false, radius: 2 } },
+                area: { marker: { enabled: false, radius: 2 } },
             },
             series,
         };
