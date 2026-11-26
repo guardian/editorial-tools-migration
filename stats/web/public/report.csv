@@ -3431,3 +3431,147 @@ Story Packages,Knockout,CSS,to_migrate,2349,0faead09ba4ed181fc68e381e4327f47548a
 Story Packages,Knockout,Migrated (TS/TSX),migrated,0,0faead09ba4ed181fc68e381e4327f47548a924a,225,2026-11-18T15:36:51Z,7594,0.0
 Story Packages,Knockout,Cucumber features,added,0,0faead09ba4ed181fc68e381e4327f47548a924a,225,2026-11-18T15:36:51Z,7594,0.0
 Story Packages,Knockout,Cucumber implemented,implemented,0,0faead09ba4ed181fc68e381e4327f47548a924a,225,2026-11-18T15:36:51Z,7594,0.0
+Workflow,Angular,JavaScript,to_migrate,6053,f338b8077ef8a6acf5a4b7d5068a9fb6bab79170,645,2026-11-23T12:55:40Z,11717,0.0
+Workflow,Angular,HTML templates,to_migrate,2184,f338b8077ef8a6acf5a4b7d5068a9fb6bab79170,645,2026-11-23T12:55:40Z,11717,0.0
+Workflow,Angular,CSS,to_migrate,3655,f338b8077ef8a6acf5a4b7d5068a9fb6bab79170,645,2026-11-23T12:55:40Z,11717,0.0
+Workflow,Angular,Migrated (TS/TSX),migrated,143,f338b8077ef8a6acf5a4b7d5068a9fb6bab79170,645,2026-11-23T12:55:40Z,11717,0.0
+Workflow,Angular,Cucumber features,added,43,f338b8077ef8a6acf5a4b7d5068a9fb6bab79170,645,2026-11-23T12:55:40Z,11717,0.0
+Workflow,Angular,Cucumber implemented,implemented,43,f338b8077ef8a6acf5a4b7d5068a9fb6bab79170,645,2026-11-23T12:55:40Z,11717,0.0
+Workflow,Angular,JavaScript,to_migrate,6053,68907c1ec7fdb23f8b9eb278ffd0f3c4c612fc6f,631,2026-11-25T15:34:17Z,11717,0.0
+Workflow,Angular,HTML templates,to_migrate,2184,68907c1ec7fdb23f8b9eb278ffd0f3c4c612fc6f,631,2026-11-25T15:34:17Z,11717,0.0
+Workflow,Angular,CSS,to_migrate,3655,68907c1ec7fdb23f8b9eb278ffd0f3c4c612fc6f,631,2026-11-25T15:34:17Z,11717,0.0
+Workflow,Angular,Migrated (TS/TSX),migrated,143,68907c1ec7fdb23f8b9eb278ffd0f3c4c612fc6f,631,2026-11-25T15:34:17Z,11717,0.0
+Workflow,Angular,Cucumber features,added,43,68907c1ec7fdb23f8b9eb278ffd0f3c4c612fc6f,631,2026-11-25T15:34:17Z,11717,0.0
+Workflow,Angular,Cucumber implemented,implemented,43,68907c1ec7fdb23f8b9eb278ffd0f3c4c612fc6f,631,2026-11-25T15:34:17Z,11717,0.0
+Grid,Angular,JavaScript,to_migrate,14366,8f10b750c39c2917e76bb3a3389b2fb879062e43,5246,2026-11-23T12:44:50Z,24896,0.0
+Grid,Angular,HTML templates,to_migrate,4917,8f10b750c39c2917e76bb3a3389b2fb879062e43,5246,2026-11-23T12:44:50Z,24896,0.0
+Grid,Angular,CSS,to_migrate,6005,8f10b750c39c2917e76bb3a3389b2fb879062e43,5246,2026-11-23T12:44:50Z,24896,0.0
+Grid,Angular,Migrated (TS/TSX),migrated,4831,8f10b750c39c2917e76bb3a3389b2fb879062e43,5246,2026-11-23T12:44:50Z,24896,0.0
+Grid,Angular,Cucumber features,added,146,8f10b750c39c2917e76bb3a3389b2fb879062e43,5246,2026-11-23T12:44:50Z,24896,0.0
+Grid,Angular,Cucumber implemented,implemented,108,8f10b750c39c2917e76bb3a3389b2fb879062e43,5246,2026-11-23T12:44:50Z,24896,0.0
+Grid,Angular,JavaScript,to_migrate,14366,0fc29efc37a1bc4c97bd9aae904b6625ba917053,5255,2026-11-23T14:00:54Z,24896,0.0
+Grid,Angular,HTML templates,to_migrate,4917,0fc29efc37a1bc4c97bd9aae904b6625ba917053,5255,2026-11-23T14:00:54Z,24896,0.0
+Grid,Angular,CSS,to_migrate,6005,0fc29efc37a1bc4c97bd9aae904b6625ba917053,5255,2026-11-23T14:00:54Z,24896,0.0
+Grid,Angular,Migrated (TS/TSX),migrated,4831,0fc29efc37a1bc4c97bd9aae904b6625ba917053,5255,2026-11-23T14:00:54Z,24896,0.0
+Grid,Angular,Cucumber features,added,146,0fc29efc37a1bc4c97bd9aae904b6625ba917053,5255,2026-11-23T14:00:54Z,24896,0.0
+Grid,Angular,Cucumber implemented,implemented,108,0fc29efc37a1bc4c97bd9aae904b6625ba917053,5255,2026-11-23T14:00:54Z,24896,0.0
+Grid,Angular,JavaScript,to_migrate,14366,f96cba0821d36d6d5df3905466a811eff501ba0f,5231,2026-11-23T14:08:57Z,24896,0.0
+Grid,Angular,HTML templates,to_migrate,4917,f96cba0821d36d6d5df3905466a811eff501ba0f,5231,2026-11-23T14:08:57Z,24896,0.0
+Grid,Angular,CSS,to_migrate,6005,f96cba0821d36d6d5df3905466a811eff501ba0f,5231,2026-11-23T14:08:57Z,24896,0.0
+Grid,Angular,Migrated (TS/TSX),migrated,4831,f96cba0821d36d6d5df3905466a811eff501ba0f,5231,2026-11-23T14:08:57Z,24896,0.0
+Grid,Angular,Cucumber features,added,146,f96cba0821d36d6d5df3905466a811eff501ba0f,5231,2026-11-23T14:08:57Z,24896,0.0
+Grid,Angular,Cucumber implemented,implemented,108,f96cba0821d36d6d5df3905466a811eff501ba0f,5231,2026-11-23T14:08:57Z,24896,0.0
+Grid,Angular,JavaScript,to_migrate,14366,2dce0603bc74bbd0de7ab34eac4a04a9a0290fb0,5261,2026-11-23T15:53:07Z,24896,0.0
+Grid,Angular,HTML templates,to_migrate,4917,2dce0603bc74bbd0de7ab34eac4a04a9a0290fb0,5261,2026-11-23T15:53:07Z,24896,0.0
+Grid,Angular,CSS,to_migrate,6005,2dce0603bc74bbd0de7ab34eac4a04a9a0290fb0,5261,2026-11-23T15:53:07Z,24896,0.0
+Grid,Angular,Migrated (TS/TSX),migrated,4831,2dce0603bc74bbd0de7ab34eac4a04a9a0290fb0,5261,2026-11-23T15:53:07Z,24896,0.0
+Grid,Angular,Cucumber features,added,146,2dce0603bc74bbd0de7ab34eac4a04a9a0290fb0,5261,2026-11-23T15:53:07Z,24896,0.0
+Grid,Angular,Cucumber implemented,implemented,108,2dce0603bc74bbd0de7ab34eac4a04a9a0290fb0,5261,2026-11-23T15:53:07Z,24896,0.0
+Grid,Angular,JavaScript,to_migrate,14366,ef43023bbeecbb0e8aa3fcde70181dc7e49f2219,5250,2026-11-23T17:42:26Z,24896,0.0
+Grid,Angular,HTML templates,to_migrate,4917,ef43023bbeecbb0e8aa3fcde70181dc7e49f2219,5250,2026-11-23T17:42:26Z,24896,0.0
+Grid,Angular,CSS,to_migrate,6005,ef43023bbeecbb0e8aa3fcde70181dc7e49f2219,5250,2026-11-23T17:42:26Z,24896,0.0
+Grid,Angular,Migrated (TS/TSX),migrated,4831,ef43023bbeecbb0e8aa3fcde70181dc7e49f2219,5250,2026-11-23T17:42:26Z,24896,0.0
+Grid,Angular,Cucumber features,added,146,ef43023bbeecbb0e8aa3fcde70181dc7e49f2219,5250,2026-11-23T17:42:26Z,24896,0.0
+Grid,Angular,Cucumber implemented,implemented,108,ef43023bbeecbb0e8aa3fcde70181dc7e49f2219,5250,2026-11-23T17:42:26Z,24896,0.0
+Grid,Angular,JavaScript,to_migrate,14366,357117c0f4e054b83fa2e17404918f0f6bd38fa8,5260,2026-11-24T11:42:17Z,24896,0.0
+Grid,Angular,HTML templates,to_migrate,4917,357117c0f4e054b83fa2e17404918f0f6bd38fa8,5260,2026-11-24T11:42:17Z,24896,0.0
+Grid,Angular,CSS,to_migrate,6005,357117c0f4e054b83fa2e17404918f0f6bd38fa8,5260,2026-11-24T11:42:17Z,24896,0.0
+Grid,Angular,Migrated (TS/TSX),migrated,4831,357117c0f4e054b83fa2e17404918f0f6bd38fa8,5260,2026-11-24T11:42:17Z,24896,0.0
+Grid,Angular,Cucumber features,added,146,357117c0f4e054b83fa2e17404918f0f6bd38fa8,5260,2026-11-24T11:42:17Z,24896,0.0
+Grid,Angular,Cucumber implemented,implemented,108,357117c0f4e054b83fa2e17404918f0f6bd38fa8,5260,2026-11-24T11:42:17Z,24896,0.0
+Grid,Angular,JavaScript,to_migrate,14366,f76d5f78888f5a0555e20e7cf1a830e521240191,5268,2026-11-24T13:49:11Z,24896,0.0
+Grid,Angular,HTML templates,to_migrate,4917,f76d5f78888f5a0555e20e7cf1a830e521240191,5268,2026-11-24T13:49:11Z,24896,0.0
+Grid,Angular,CSS,to_migrate,6005,f76d5f78888f5a0555e20e7cf1a830e521240191,5268,2026-11-24T13:49:11Z,24896,0.0
+Grid,Angular,Migrated (TS/TSX),migrated,4831,f76d5f78888f5a0555e20e7cf1a830e521240191,5268,2026-11-24T13:49:11Z,24896,0.0
+Grid,Angular,Cucumber features,added,146,f76d5f78888f5a0555e20e7cf1a830e521240191,5268,2026-11-24T13:49:11Z,24896,0.0
+Grid,Angular,Cucumber implemented,implemented,108,f76d5f78888f5a0555e20e7cf1a830e521240191,5268,2026-11-24T13:49:11Z,24896,0.0
+Grid,Angular,JavaScript,to_migrate,14366,94d8a05270fae9a7c14742241b669cd04d635e9d,5064,2026-11-25T10:41:06Z,24896,0.0
+Grid,Angular,HTML templates,to_migrate,4917,94d8a05270fae9a7c14742241b669cd04d635e9d,5064,2026-11-25T10:41:06Z,24896,0.0
+Grid,Angular,CSS,to_migrate,6005,94d8a05270fae9a7c14742241b669cd04d635e9d,5064,2026-11-25T10:41:06Z,24896,0.0
+Grid,Angular,Migrated (TS/TSX),migrated,4831,94d8a05270fae9a7c14742241b669cd04d635e9d,5064,2026-11-25T10:41:06Z,24896,0.0
+Grid,Angular,Cucumber features,added,146,94d8a05270fae9a7c14742241b669cd04d635e9d,5064,2026-11-25T10:41:06Z,24896,0.0
+Grid,Angular,Cucumber implemented,implemented,108,94d8a05270fae9a7c14742241b669cd04d635e9d,5064,2026-11-25T10:41:06Z,24896,0.0
+Grid,Angular,JavaScript,to_migrate,14366,385fc5ba25e460779e9693b2e2ae97c8fe136788,5247,2026-11-25T12:40:57Z,24896,0.0
+Grid,Angular,HTML templates,to_migrate,4917,385fc5ba25e460779e9693b2e2ae97c8fe136788,5247,2026-11-25T12:40:57Z,24896,0.0
+Grid,Angular,CSS,to_migrate,6005,385fc5ba25e460779e9693b2e2ae97c8fe136788,5247,2026-11-25T12:40:57Z,24896,0.0
+Grid,Angular,Migrated (TS/TSX),migrated,4831,385fc5ba25e460779e9693b2e2ae97c8fe136788,5247,2026-11-25T12:40:57Z,24896,0.0
+Grid,Angular,Cucumber features,added,153,385fc5ba25e460779e9693b2e2ae97c8fe136788,5247,2026-11-25T12:40:57Z,24896,0.0
+Grid,Angular,Cucumber implemented,implemented,108,385fc5ba25e460779e9693b2e2ae97c8fe136788,5247,2026-11-25T12:40:57Z,24896,0.0
+Grid,Angular,JavaScript,to_migrate,14366,f16f97482f30a38020a9443d0611eb745e4eed5a,5130,2026-11-25T13:33:13Z,24896,0.0
+Grid,Angular,HTML templates,to_migrate,4917,f16f97482f30a38020a9443d0611eb745e4eed5a,5130,2026-11-25T13:33:13Z,24896,0.0
+Grid,Angular,CSS,to_migrate,6005,f16f97482f30a38020a9443d0611eb745e4eed5a,5130,2026-11-25T13:33:13Z,24896,0.0
+Grid,Angular,Migrated (TS/TSX),migrated,4831,f16f97482f30a38020a9443d0611eb745e4eed5a,5130,2026-11-25T13:33:13Z,24896,0.0
+Grid,Angular,Cucumber features,added,191,f16f97482f30a38020a9443d0611eb745e4eed5a,5130,2026-11-25T13:33:13Z,24896,0.0
+Grid,Angular,Cucumber implemented,implemented,146,f16f97482f30a38020a9443d0611eb745e4eed5a,5130,2026-11-25T13:33:13Z,24896,0.0
+Grid,Angular,JavaScript,to_migrate,14366,65281e24024696149b45f8dcc6175a4898362289,5267,2026-11-25T13:48:53Z,24896,0.0
+Grid,Angular,HTML templates,to_migrate,4917,65281e24024696149b45f8dcc6175a4898362289,5267,2026-11-25T13:48:53Z,24896,0.0
+Grid,Angular,CSS,to_migrate,6005,65281e24024696149b45f8dcc6175a4898362289,5267,2026-11-25T13:48:53Z,24896,0.0
+Grid,Angular,Migrated (TS/TSX),migrated,4831,65281e24024696149b45f8dcc6175a4898362289,5267,2026-11-25T13:48:53Z,24896,0.0
+Grid,Angular,Cucumber features,added,191,65281e24024696149b45f8dcc6175a4898362289,5267,2026-11-25T13:48:53Z,24896,0.0
+Grid,Angular,Cucumber implemented,implemented,146,65281e24024696149b45f8dcc6175a4898362289,5267,2026-11-25T13:48:53Z,24896,0.0
+Grid,Angular,JavaScript,to_migrate,14366,94bbf2cbc92e6cf11b8333010828defff1b1fa2e,5269,2026-11-25T14:02:03Z,24896,0.0
+Grid,Angular,HTML templates,to_migrate,4917,94bbf2cbc92e6cf11b8333010828defff1b1fa2e,5269,2026-11-25T14:02:03Z,24896,0.0
+Grid,Angular,CSS,to_migrate,6005,94bbf2cbc92e6cf11b8333010828defff1b1fa2e,5269,2026-11-25T14:02:03Z,24896,0.0
+Grid,Angular,Migrated (TS/TSX),migrated,4831,94bbf2cbc92e6cf11b8333010828defff1b1fa2e,5269,2026-11-25T14:02:03Z,24896,0.0
+Grid,Angular,Cucumber features,added,191,94bbf2cbc92e6cf11b8333010828defff1b1fa2e,5269,2026-11-25T14:02:03Z,24896,0.0
+Grid,Angular,Cucumber implemented,implemented,146,94bbf2cbc92e6cf11b8333010828defff1b1fa2e,5269,2026-11-25T14:02:03Z,24896,0.0
+Grid,Angular,JavaScript,to_migrate,14366,6472cb157322b9f3ea240af28e2c1cb7357d8452,5275,2026-11-25T15:58:44Z,24896,0.0
+Grid,Angular,HTML templates,to_migrate,4917,6472cb157322b9f3ea240af28e2c1cb7357d8452,5275,2026-11-25T15:58:44Z,24896,0.0
+Grid,Angular,CSS,to_migrate,6005,6472cb157322b9f3ea240af28e2c1cb7357d8452,5275,2026-11-25T15:58:44Z,24896,0.0
+Grid,Angular,Migrated (TS/TSX),migrated,4831,6472cb157322b9f3ea240af28e2c1cb7357d8452,5275,2026-11-25T15:58:44Z,24896,0.0
+Grid,Angular,Cucumber features,added,191,6472cb157322b9f3ea240af28e2c1cb7357d8452,5275,2026-11-25T15:58:44Z,24896,0.0
+Grid,Angular,Cucumber implemented,implemented,146,6472cb157322b9f3ea240af28e2c1cb7357d8452,5275,2026-11-25T15:58:44Z,24896,0.0
+Grid,Angular,JavaScript,to_migrate,14366,1c98f87a7764f6a043f50aec29fb0cc9d780cb5d,5276,2026-11-25T17:12:51Z,24896,0.0
+Grid,Angular,HTML templates,to_migrate,4917,1c98f87a7764f6a043f50aec29fb0cc9d780cb5d,5276,2026-11-25T17:12:51Z,24896,0.0
+Grid,Angular,CSS,to_migrate,6005,1c98f87a7764f6a043f50aec29fb0cc9d780cb5d,5276,2026-11-25T17:12:51Z,24896,0.0
+Grid,Angular,Migrated (TS/TSX),migrated,4831,1c98f87a7764f6a043f50aec29fb0cc9d780cb5d,5276,2026-11-25T17:12:51Z,24896,0.0
+Grid,Angular,Cucumber features,added,191,1c98f87a7764f6a043f50aec29fb0cc9d780cb5d,5276,2026-11-25T17:12:51Z,24896,0.0
+Grid,Angular,Cucumber implemented,implemented,146,1c98f87a7764f6a043f50aec29fb0cc9d780cb5d,5276,2026-11-25T17:12:51Z,24896,0.0
+Restorer,Angular,JavaScript,to_migrate,0,c9b16915910474bf01506f0cff0dcf098a05457f,289,2026-11-20T10:26:48Z,3393,100.0
+Restorer,Angular,HTML templates,to_migrate,0,c9b16915910474bf01506f0cff0dcf098a05457f,289,2026-11-20T10:26:48Z,3393,100.0
+Restorer,Angular,CSS,to_migrate,0,c9b16915910474bf01506f0cff0dcf098a05457f,289,2026-11-20T10:26:48Z,3393,100.0
+Restorer,Angular,Migrated (TS/TSX),migrated,2892,c9b16915910474bf01506f0cff0dcf098a05457f,289,2026-11-20T10:26:48Z,3393,100.0
+Restorer,Angular,Cucumber features,added,69,c9b16915910474bf01506f0cff0dcf098a05457f,289,2026-11-20T10:26:48Z,3393,100.0
+Restorer,Angular,Cucumber implemented,implemented,69,c9b16915910474bf01506f0cff0dcf098a05457f,289,2026-11-20T10:26:48Z,3393,100.0
+Restorer,Angular,JavaScript,to_migrate,0,6cb33fdf9bf2a26e8e449ade63040c8d97fd8fc0,290,2026-11-24T09:25:11Z,3393,100.0
+Restorer,Angular,HTML templates,to_migrate,0,6cb33fdf9bf2a26e8e449ade63040c8d97fd8fc0,290,2026-11-24T09:25:11Z,3393,100.0
+Restorer,Angular,CSS,to_migrate,0,6cb33fdf9bf2a26e8e449ade63040c8d97fd8fc0,290,2026-11-24T09:25:11Z,3393,100.0
+Restorer,Angular,Migrated (TS/TSX),migrated,2892,6cb33fdf9bf2a26e8e449ade63040c8d97fd8fc0,290,2026-11-24T09:25:11Z,3393,100.0
+Restorer,Angular,Cucumber features,added,69,6cb33fdf9bf2a26e8e449ade63040c8d97fd8fc0,290,2026-11-24T09:25:11Z,3393,100.0
+Restorer,Angular,Cucumber implemented,implemented,69,6cb33fdf9bf2a26e8e449ade63040c8d97fd8fc0,290,2026-11-24T09:25:11Z,3393,100.0
+Restorer,Angular,JavaScript,to_migrate,0,a8fe928a2d1f3d593ab210747b13478928e450fb,294,2026-11-24T10:49:11Z,3393,100.0
+Restorer,Angular,HTML templates,to_migrate,0,a8fe928a2d1f3d593ab210747b13478928e450fb,294,2026-11-24T10:49:11Z,3393,100.0
+Restorer,Angular,CSS,to_migrate,0,a8fe928a2d1f3d593ab210747b13478928e450fb,294,2026-11-24T10:49:11Z,3393,100.0
+Restorer,Angular,Migrated (TS/TSX),migrated,2892,a8fe928a2d1f3d593ab210747b13478928e450fb,294,2026-11-24T10:49:11Z,3393,100.0
+Restorer,Angular,Cucumber features,added,69,a8fe928a2d1f3d593ab210747b13478928e450fb,294,2026-11-24T10:49:11Z,3393,100.0
+Restorer,Angular,Cucumber implemented,implemented,69,a8fe928a2d1f3d593ab210747b13478928e450fb,294,2026-11-24T10:49:11Z,3393,100.0
+Restorer,Angular,JavaScript,to_migrate,0,a81871196ab04d67a5bc5bc3b8540bfd7d3def92,293,2026-11-25T10:52:42Z,3393,100.0
+Restorer,Angular,HTML templates,to_migrate,0,a81871196ab04d67a5bc5bc3b8540bfd7d3def92,293,2026-11-25T10:52:42Z,3393,100.0
+Restorer,Angular,CSS,to_migrate,0,a81871196ab04d67a5bc5bc3b8540bfd7d3def92,293,2026-11-25T10:52:42Z,3393,100.0
+Restorer,Angular,Migrated (TS/TSX),migrated,2892,a81871196ab04d67a5bc5bc3b8540bfd7d3def92,293,2026-11-25T10:52:42Z,3393,100.0
+Restorer,Angular,Cucumber features,added,69,a81871196ab04d67a5bc5bc3b8540bfd7d3def92,293,2026-11-25T10:52:42Z,3393,100.0
+Restorer,Angular,Cucumber implemented,implemented,69,a81871196ab04d67a5bc5bc3b8540bfd7d3def92,293,2026-11-25T10:52:42Z,3393,100.0
+Restorer,Angular,JavaScript,to_migrate,0,8204ef9717e6aa89f389dc000f93123856724d4b,300,2026-11-25T17:30:09Z,3393,100.0
+Restorer,Angular,HTML templates,to_migrate,0,8204ef9717e6aa89f389dc000f93123856724d4b,300,2026-11-25T17:30:09Z,3393,100.0
+Restorer,Angular,CSS,to_migrate,0,8204ef9717e6aa89f389dc000f93123856724d4b,300,2026-11-25T17:30:09Z,3393,100.0
+Restorer,Angular,Migrated (TS/TSX),migrated,2892,8204ef9717e6aa89f389dc000f93123856724d4b,300,2026-11-25T17:30:09Z,3393,100.0
+Restorer,Angular,Cucumber features,added,69,8204ef9717e6aa89f389dc000f93123856724d4b,300,2026-11-25T17:30:09Z,3393,100.0
+Restorer,Angular,Cucumber implemented,implemented,69,8204ef9717e6aa89f389dc000f93123856724d4b,300,2026-11-25T17:30:09Z,3393,100.0
+Fronts,Knockout,JavaScript,to_migrate,8199,cc18f5b16cb5a8a8f92df5c4c7ef96132aba478e,2188,2026-11-25T11:44:03Z,12507,0.0
+Fronts,Knockout,HTML templates,to_migrate,1514,cc18f5b16cb5a8a8f92df5c4c7ef96132aba478e,2188,2026-11-25T11:44:03Z,12507,0.0
+Fronts,Knockout,CSS,to_migrate,2868,cc18f5b16cb5a8a8f92df5c4c7ef96132aba478e,2188,2026-11-25T11:44:03Z,12507,0.0
+Fronts,Knockout,Migrated (TS/TSX),migrated,26825,cc18f5b16cb5a8a8f92df5c4c7ef96132aba478e,2188,2026-11-25T11:44:03Z,12507,0.0
+Fronts,Knockout,Cucumber features,added,2,cc18f5b16cb5a8a8f92df5c4c7ef96132aba478e,2188,2026-11-25T11:44:03Z,12507,0.0
+Fronts,Knockout,Cucumber implemented,implemented,2,cc18f5b16cb5a8a8f92df5c4c7ef96132aba478e,2188,2026-11-25T11:44:03Z,12507,0.0
+Fronts,Knockout,JavaScript,to_migrate,8199,f791f0dfe59bb2aef338ccd322420fbcc2c74d64,2187,2026-11-25T11:46:36Z,12507,0.0
+Fronts,Knockout,HTML templates,to_migrate,1514,f791f0dfe59bb2aef338ccd322420fbcc2c74d64,2187,2026-11-25T11:46:36Z,12507,0.0
+Fronts,Knockout,CSS,to_migrate,2868,f791f0dfe59bb2aef338ccd322420fbcc2c74d64,2187,2026-11-25T11:46:36Z,12507,0.0
+Fronts,Knockout,Migrated (TS/TSX),migrated,26829,f791f0dfe59bb2aef338ccd322420fbcc2c74d64,2187,2026-11-25T11:46:36Z,12507,0.0
+Fronts,Knockout,Cucumber features,added,2,f791f0dfe59bb2aef338ccd322420fbcc2c74d64,2187,2026-11-25T11:46:36Z,12507,0.0
+Fronts,Knockout,Cucumber implemented,implemented,2,f791f0dfe59bb2aef338ccd322420fbcc2c74d64,2187,2026-11-25T11:46:36Z,12507,0.0
+Story Packages,Knockout,JavaScript,to_migrate,4607,31edac63c884c21d3d32a11a05eb717e55260071,226,2026-11-23T10:51:19Z,7594,0.0
+Story Packages,Knockout,HTML templates,to_migrate,638,31edac63c884c21d3d32a11a05eb717e55260071,226,2026-11-23T10:51:19Z,7594,0.0
+Story Packages,Knockout,CSS,to_migrate,2349,31edac63c884c21d3d32a11a05eb717e55260071,226,2026-11-23T10:51:19Z,7594,0.0
+Story Packages,Knockout,Migrated (TS/TSX),migrated,0,31edac63c884c21d3d32a11a05eb717e55260071,226,2026-11-23T10:51:19Z,7594,0.0
+Story Packages,Knockout,Cucumber features,added,0,31edac63c884c21d3d32a11a05eb717e55260071,226,2026-11-23T10:51:19Z,7594,0.0
+Story Packages,Knockout,Cucumber implemented,implemented,0,31edac63c884c21d3d32a11a05eb717e55260071,226,2026-11-23T10:51:19Z,7594,0.0
