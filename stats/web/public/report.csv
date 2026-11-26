@@ -3575,3 +3575,21 @@ Story Packages,Knockout,CSS,to_migrate,2349,31edac63c884c21d3d32a11a05eb717e5526
 Story Packages,Knockout,Migrated (TS/TSX),migrated,0,31edac63c884c21d3d32a11a05eb717e55260071,226,2026-11-23T10:51:19Z,7594,0.0
 Story Packages,Knockout,Cucumber features,added,0,31edac63c884c21d3d32a11a05eb717e55260071,226,2026-11-23T10:51:19Z,7594,0.0
 Story Packages,Knockout,Cucumber implemented,implemented,0,31edac63c884c21d3d32a11a05eb717e55260071,226,2026-11-23T10:51:19Z,7594,0.0
+Workflow,Angular,JavaScript,to_migrate,6053,c951b39d0a7c361daf3c233695f5dab4f402255f,649,2026-11-26T11:20:04Z,11717,0.0
+Workflow,Angular,HTML templates,to_migrate,2184,c951b39d0a7c361daf3c233695f5dab4f402255f,649,2026-11-26T11:20:04Z,11717,0.0
+Workflow,Angular,CSS,to_migrate,3655,c951b39d0a7c361daf3c233695f5dab4f402255f,649,2026-11-26T11:20:04Z,11717,0.0
+Workflow,Angular,Migrated (TS/TSX),migrated,143,c951b39d0a7c361daf3c233695f5dab4f402255f,649,2026-11-26T11:20:04Z,11717,0.0
+Workflow,Angular,Cucumber features,added,43,c951b39d0a7c361daf3c233695f5dab4f402255f,649,2026-11-26T11:20:04Z,11717,0.0
+Workflow,Angular,Cucumber implemented,implemented,43,c951b39d0a7c361daf3c233695f5dab4f402255f,649,2026-11-26T11:20:04Z,11717,0.0
+Grid,Angular,JavaScript,to_migrate,14366,af57c6f3de44bbc4ffd233e284e87237097664f5,5258,2026-11-26T11:46:00Z,24896,0.0
+Grid,Angular,HTML templates,to_migrate,4917,af57c6f3de44bbc4ffd233e284e87237097664f5,5258,2026-11-26T11:46:00Z,24896,0.0
+Grid,Angular,CSS,to_migrate,6005,af57c6f3de44bbc4ffd233e284e87237097664f5,5258,2026-11-26T11:46:00Z,24896,0.0
+Grid,Angular,Migrated (TS/TSX),migrated,4831,af57c6f3de44bbc4ffd233e284e87237097664f5,5258,2026-11-26T11:46:00Z,24896,0.0
+Grid,Angular,Cucumber features,added,236,af57c6f3de44bbc4ffd233e284e87237097664f5,5258,2026-11-26T11:46:00Z,24896,0.0
+Grid,Angular,Cucumber implemented,implemented,146,af57c6f3de44bbc4ffd233e284e87237097664f5,5258,2026-11-26T11:46:00Z,24896,0.0
+Grid,Angular,JavaScript,to_migrate,14365,9af58c60096a8057c40b2aefed4f3dce8a395331,5265,2026-11-26T14:48:47Z,24896,0.0
+Grid,Angular,HTML templates,to_migrate,4918,9af58c60096a8057c40b2aefed4f3dce8a395331,5265,2026-11-26T14:48:47Z,24896,0.0
+Grid,Angular,CSS,to_migrate,6005,9af58c60096a8057c40b2aefed4f3dce8a395331,5265,2026-11-26T14:48:47Z,24896,0.0
+Grid,Angular,Migrated (TS/TSX),migrated,4831,9af58c60096a8057c40b2aefed4f3dce8a395331,5265,2026-11-26T14:48:47Z,24896,0.0
+Grid,Angular,Cucumber features,added,238,9af58c60096a8057c40b2aefed4f3dce8a395331,5265,2026-11-26T14:48:47Z,24896,0.0
+Grid,Angular,Cucumber implemented,implemented,183,9af58c60096a8057c40b2aefed4f3dce8a395331,5265,2026-11-26T14:48:47Z,24896,0.0
